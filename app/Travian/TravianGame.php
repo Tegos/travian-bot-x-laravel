@@ -4,8 +4,11 @@ namespace App\Travian;
 
 use Carbon\Carbon;
 use DateTime;
+use Exception;
 use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\WebDriverBy;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Lottery;
 use Laravel\Dusk\Browser;
 
 final class TravianGame
@@ -19,10 +22,16 @@ final class TravianGame
 
     /**
      * @throws TimeoutException
+     * @throws Exception
      */
     public function performLoginAction(): void
     {
-        if(!$this->isAuthenticated()){
+        $this->waitRandomizer();
+
+        Log::channel('travian')->info('performLoginAction');
+
+        if (!$this->isAuthenticated()) {
+            Log::channel('travian')->info('Input login/password');
             $link = TravianRoute::mainRoute();
             $this->browser->visit($link);
 
@@ -337,6 +346,18 @@ final class TravianGame
         $response_content = $response->getBody()->getContents();
         $crawler = new Crawler($response_content);
         return $crawler->filter('#villageName .villageInput')->attr('value');
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function waitRandomizer(): void
+    {
+        $probability = Lottery::odds(1, 2)->choose();
+
+        $seconds = $probability ? random_int(10, 120) : 1;
+        Log::channel('travian')->info("Delay: $seconds sec");
+        sleep($seconds);
     }
 
 }

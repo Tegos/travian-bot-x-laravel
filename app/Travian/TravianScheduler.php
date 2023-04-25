@@ -17,20 +17,22 @@ final class TravianScheduler
     {
         $key = self::LOGIN_ACTION;
 
-        $expression = Cache::get($key);
-        if (!$expression) {
-            $randomMinute = random_int(0, 59);
+        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addHour(), function () {
+            return random_int(0, 59);
+        });
 
-            // hour between 8:00 and 19:00
-            $hourRange = range(8, 19);
+        $expressionEndPart = Cache::remember($key . 'end-part', Carbon::now()->endOfDay(), function () {
+
+            // hour between 7:00 and 22:00
+            $hourRange = range(7, 22);
             shuffle($hourRange);
-            // execute twice a day
-            $randomHours = array_slice($hourRange, 0, 2);
+            // execute 5 times per day
+            $times = 5;
+            $randomHours = array_slice($hourRange, 0, $times);
 
-            $expression = $randomMinute . ' ' . implode(',', $randomHours) . ' * * *';
-            Cache::put($key, $expression, Carbon::now()->endOfDay());
-        }
+            return implode(',', $randomHours) . ' * * *';
+        });
 
-        return $expression;
+        return $randomMinutePart . ' ' . $expressionEndPart;
     }
 }
