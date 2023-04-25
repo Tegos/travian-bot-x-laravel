@@ -8,14 +8,14 @@ use Exception;
 use Illuminate\Console\Command;
 use Laravel\Dusk\Browser;
 
-final class TravainInitLoginActionCommand extends Command
+final class TravianInitLoginActionCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'travain:login-action';
+    protected $signature = 'travian:login-action';
 
     /**
      * The console command description.

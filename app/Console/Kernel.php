@@ -2,7 +2,7 @@
 
 namespace App\Console;
 
-use App\Console\Commands\Travian\TravainInitLoginActionCommand;
+use App\Console\Commands\Travian\TravianInitLoginActionCommand;
 use App\Travian\TravianScheduler;
 use Exception;
 use Illuminate\Console\Scheduling\Schedule;
@@ -17,7 +17,7 @@ final class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // daily at [8-19]
-        $schedule->command(TravainInitLoginActionCommand::class)->cron(TravianScheduler::actionLoginScheduleCronExpression());
+        $schedule->command(TravianInitLoginActionCommand::class)->cron(TravianScheduler::actionLoginScheduleCronExpression());
     }
 
     /**
