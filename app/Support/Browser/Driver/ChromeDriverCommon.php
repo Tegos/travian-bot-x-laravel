@@ -33,6 +33,7 @@ class ChromeDriverCommon implements DriverContract
         $options = (new ChromeOptions())->addArguments(
             array_filter(
                 [
+                    '--no-sandbox',
                     '--disable-gpu',
                     '--window-size=1920,1080',
                     '--ignore-certificate-errors',
