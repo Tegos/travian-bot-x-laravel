@@ -10,18 +10,15 @@ use Illuminate\Support\Facades\Log;
 
 abstract class Api
 {
-    private string $basePathUrl = '/test/hs/';
+    private string $basePathUrl = '';
 
     private PendingRequest $client;
 
     public function __construct()
     {
-        $api1cUrl = trim(config('services.1c.url'), '/') . $this->basePathUrl;
-        $api1cLogin = config('services.1c.login');
-        $api1cPassword = config('services.1c.password');
+        $apiUrl = trim(config('services.travian.domain'), '/') . $this->basePathUrl;
 
-        $this->client = Http::baseUrl($api1cUrl)
-            ->withBasicAuth($api1cLogin, $api1cPassword)
+        $this->client = Http::baseUrl($apiUrl)
             ->acceptJson();
     }
 

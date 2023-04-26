@@ -24,11 +24,12 @@ final class TravianScheduler
         $expressionEndPart = Cache::remember($key . 'end-part', Carbon::now()->endOfDay(), function () {
 
             // hour between 7:00 and 22:00
-            $hourRange = range(7, 22);
+            $hourRange = range(5, 23);
             shuffle($hourRange);
             // execute 5 times per day
             $times = 5;
             $randomHours = array_slice($hourRange, 0, $times);
+            sort($randomHours);
 
             return implode(',', $randomHours) . ' * * *';
         });
