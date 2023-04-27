@@ -2,13 +2,17 @@
 
 namespace App\Travian;
 
+use App\Support\Browser\BrowserHelper;
 use Carbon\Carbon;
 use DateTime;
 use Exception;
 use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverExpectedCondition;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Lottery;
+use Illuminate\Support\Str;
 use Laravel\Dusk\Browser;
 
 final class TravianGame
@@ -26,9 +30,9 @@ final class TravianGame
      */
     public function performLoginAction(): void
     {
-        $this->waitRandomizer();
+        $this->waitRandomizer(10);
 
-        Log::channel('travian')->info('performLoginAction');
+        Log::channel('travian')->info(__FUNCTION__);
 
         if (!$this->isAuthenticated()) {
             Log::channel('travian')->info('Input login/password');
@@ -44,6 +48,7 @@ final class TravianGame
             $buttonLogin->click();
 
             $this->browser->waitForReload();
+            $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
     }
 
@@ -60,7 +65,7 @@ final class TravianGame
     /**
      * @param $response_content
      */
-    private function setAjaxToken($response_content)
+    protected function setAjaxToken($response_content)
     {
         // set ajaxToken
         $html = $response_content;
@@ -97,104 +102,78 @@ final class TravianGame
 
     }
 
-    public function runFarmLists()
+    /**
+     * @throws TimeoutException
+     * @throws Exception
+     */
+    public function performRunFarmListAction(): void
     {
-        $rallyPointFarmList = $this->client->get('/build.php?tt=99&id=39');
-        $crawler = new Crawler($rallyPointFarmList->getBody()->getContents());
-        $raidList = $crawler->filter('#raidList .raidList');
+        $this->performLoginAction();
 
-        $sort_params = [
-            [
-                'field' => 'lastRaid',
-                'direction' => 'desc'
-            ],
-            [
-                'field' => 'lastRaid',
-                'direction' => 'asc'
-            ],
-            [
-                'field' => 'distance',
-                'direction' => 'asc'
-            ],
-            [
-                'field' => 'distance',
-                'direction' => 'desc'
-            ],
-            [
-                'field' => 'bounty',
-                'direction' => 'desc'
-            ],
-            [
-                'field' => 'ew',
-                'direction' => 'asc'
-            ],
-            [
-                'field' => 'ew',
-                'direction' => 'desc'
-            ],
-        ];
+        $this->waitRandomizer(5);
 
-        $sort_param = $sort_params[array_rand($sort_params)];
+        $this->performRandomAction();
 
+        if ($this->isAuthenticated()) {
 
-        Log::i(self::$tag, 'Sort: ' . json_encode($sort_param));
+            Log::channel('travian')->info(__FUNCTION__);
 
-        if ($raidList->count() > 0) {
-            $allowed_list_ids = Helper::getAllowedFarmList();
-            Log::i(self::$tag, 'Farm lists: ' . json_encode($allowed_list_ids));
+            $driver = $this->browser->driver;
+            $this->browser->visit(TravianRoute::mainRoute());
 
-            $first_run = true;
-            $raidListArray = [];
+            $this->browser->visit(TravianRoute::rallyPointRoute());
+            $driver->wait()->until(BrowserHelper::jqueryAjaxFinished());
 
-            foreach ($raidList as $list) {
-                $element = new Crawler($list);
-                $raidListArray[] = $element;
-            }
+            $this->browser->visit(TravianRoute::rallyPointFarmListRoute());
+            $driver->wait()->until(BrowserHelper::jqueryAjaxFinished());
 
-            $rand = RandomBreak::getRand();
-            if ($rand > .5) {
-                shuffle($raidListArray);
-            }
+            $buttonStartAllFarmList = $this->browser->driver->findElement(WebDriverBy::cssSelector('#raidList button.startAll'));
+            $buttonStartAllFarmList->click();
 
-            foreach ($raidListArray as $element) {
+            // wait until cancel button is hidden
+            $driver->wait(10, 1000)->until(
+                WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::cssSelector('#raidList button.cancelDispatch'))
+            );
 
-                if ($first_run) {
-                    $param_a = $element->filter("form input[name=a]")->attr('value');
-                }
-
-                $raid_list_id = $element->attr('data-listid');
-                if (in_array($raid_list_id, $allowed_list_ids)) {
-                    $raid_form_data = [
-                        'method' => 'ActionStartRaid',
-                        'listId' => $raid_list_id,
-                        'slots' => [],
-                        'sort' => $sort_param['field'],
-                        'direction' => $sort_param['field'],
-                        'captcha' => null,
-                        'a' => $param_a ?? '',
-                        'loadedLists' => [],
-                    ];
-
-                    $json = $this->runFarmList($raid_form_data);
-                    $param_a = $json['a'];
-                    $first_run = false;
-                }
-            }
+            $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
     }
 
-    public function runFarmList($raidData)
+    /**
+     * @throws TimeoutException
+     * @throws Exception
+     */
+    public function performRandomAction(): void
     {
-        $response = $this->makeRequest(
-            [
-                'method' => 'post',
-                'url' => '/api/v1/raid-list',
-                'json' => $raidData,
-                'ajax' => true
-            ]
-        );
+        $this->performLoginAction();
 
-        return json_decode($response->getBody()->getContents(), true);
+        $listRoutes = [
+            TravianRoute::mainRoute(),
+            TravianRoute::rallyPointRoute(),
+            TravianRoute::allianceRoute(),
+            TravianRoute::reportRoute(),
+            TravianRoute::allianceReportRoute(),
+            TravianRoute::heroInventoryRoute(),
+            TravianRoute::auctionRoute(),
+        ];
+
+        $this->waitRandomizer(5);
+
+        if ($this->isAuthenticated()) {
+
+            Log::channel('travian')->info(__FUNCTION__);
+
+            $routes = Arr::random($listRoutes, 3);
+
+            $driver = $this->browser->driver;
+
+            foreach ($routes as $route) {
+                $this->browser->visit($route);
+                $driver->wait()->until(BrowserHelper::jqueryAjaxFinished());
+            }
+
+            $this->browser->screenshot(Str::snake(__FUNCTION__));
+        }
     }
 
     public function clearOffensiveReport(): int
@@ -340,24 +319,19 @@ final class TravianGame
         return '';
     }
 
-    public function getVillageName($village_id = 0): string
-    {
-        $response = $this->client->get('/dorf1.php?newdid=' . $village_id);
-        $response_content = $response->getBody()->getContents();
-        $crawler = new Crawler($response_content);
-        return $crawler->filter('#villageName .villageInput')->attr('value');
-    }
-
     /**
      * @throws Exception
      */
-    private function waitRandomizer(): void
+    private function waitRandomizer(int $minWaitSeconds = 20, float $probability = 0.5): void
     {
-        $probability = Lottery::odds(1, 2)->choose();
+        $chances = 10;
+        $outOf = intval(ceil($chances / $probability));
+        $probabilityResult = Lottery::odds($chances, $outOf)->choose();
 
-        $seconds = $probability ? random_int(10, 120) : 1;
+        $maxWaitSeconds = intval($minWaitSeconds + ($minWaitSeconds * 0.2));
+
+        $seconds = $probabilityResult ? random_int($minWaitSeconds, $maxWaitSeconds) : 1;
         Log::channel('travian')->info("Delay: $seconds sec");
         sleep($seconds);
     }
-
 }

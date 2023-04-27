@@ -8,9 +8,9 @@ use Exception;
 use Illuminate\Console\Command;
 use Laravel\Dusk\Browser;
 
-final class TravianInitLoginActionCommand extends Command
+final class TravianRunFarmListActionCommand extends Command
 {
-    protected $signature = 'travian:login-action';
+    protected $signature = 'travian:run-farm-list-action';
 
     protected $description = 'Perform login action';
 
@@ -25,7 +25,7 @@ final class TravianInitLoginActionCommand extends Command
 
             $travianGame = new TravianGame($browser);
 
-            $travianGame->performLoginAction();
+            $travianGame->performRunFarmListAction();
 
         });
 
