@@ -47,7 +47,7 @@ final class TravianScheduler
             return random_int(0, 59);
         });
 
-        $expressionEndPart = '*/2 * * *';
+        $expressionEndPart = '* * * *';
 
         return $randomMinutePart . ' ' . $expressionEndPart;
     }
