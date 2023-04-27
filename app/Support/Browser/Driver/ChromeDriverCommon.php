@@ -30,6 +30,10 @@ class ChromeDriverCommon implements DriverContract
 
     public function getDriver(): RemoteWebDriver
     {
+
+        $userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36';
+
+
         $options = (new ChromeOptions())->addArguments(
             array_filter(
                 [
@@ -38,12 +42,18 @@ class ChromeDriverCommon implements DriverContract
                     '--window-size=1920,1080',
                     '--ignore-certificate-errors',
                     '--ignore-ssl-errors',
+                    '--disable-web-security',
                     '--allow-running-insecure-content',
                     '--user-data-dir=' . config('laravel-console-dusk.paths.data'),
-                    $this->runHeadless(),
+                    '--user-agent=' . config('laravel-console-dusk.browser.user_agent'),
+                    //$this->runHeadless(),
                 ]
             )
         );
+
+        $options->setExperimentalOption('excludeSwitches', ['enable-automation']);
+
+        $options->addArguments(['--disable-blink-features=AutomationControlled']);
 
         return RemoteWebDriver::create(
             'http://localhost:9515',

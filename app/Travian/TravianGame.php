@@ -2,7 +2,6 @@
 
 namespace App\Travian;
 
-use App\Support\Browser\BrowserHelper;
 use Carbon\Carbon;
 use DateTime;
 use Exception;
@@ -120,12 +119,13 @@ final class TravianGame
 
             $driver = $this->browser->driver;
             $this->browser->visit(TravianRoute::mainRoute());
+            $this->waitRandomizer(5);
 
             $this->browser->visit(TravianRoute::rallyPointRoute());
-            $driver->wait()->until(BrowserHelper::jqueryAjaxFinished());
+            $this->waitRandomizer(5);
 
             $this->browser->visit(TravianRoute::rallyPointFarmListRoute());
-            $driver->wait()->until(BrowserHelper::jqueryAjaxFinished());
+            $this->waitRandomizer(5);
 
             $buttonStartAllFarmList = $this->browser->driver->findElement(WebDriverBy::cssSelector('#raidList button.startAll'));
             $buttonStartAllFarmList->click();
@@ -134,6 +134,7 @@ final class TravianGame
             $driver->wait(10, 1000)->until(
                 WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::cssSelector('#raidList button.cancelDispatch'))
             );
+            $this->waitRandomizer(3);
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
@@ -169,7 +170,7 @@ final class TravianGame
 
             foreach ($routes as $route) {
                 $this->browser->visit($route);
-                $driver->wait()->until(BrowserHelper::jqueryAjaxFinished());
+                $this->waitRandomizer(5);
             }
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
