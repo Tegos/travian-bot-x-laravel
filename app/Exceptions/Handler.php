@@ -7,6 +7,10 @@ use Throwable;
 
 class Handler extends ExceptionHandler
 {
+    protected $dontReport = [
+
+    ];
+
     /**
      * The list of the inputs that are never flashed to the session on validation exceptions.
      *

@@ -2,6 +2,8 @@
 
 namespace App\Travian;
 
+use App\Exceptions\Import\InputFileUkraineLocalitiesEmptyException;
+use App\Exceptions\Travian\GameRandomBreakException;
 use Carbon\Carbon;
 use DateTime;
 use Exception;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Lottery;
 use Illuminate\Support\Str;
 use Laravel\Dusk\Browser;
+use Throwable;
 
 final class TravianGame
 {
@@ -104,6 +107,7 @@ final class TravianGame
     /**
      * @throws TimeoutException
      * @throws Exception
+     * @throws Throwable
      */
     public function performRunFarmListAction(): void
     {
@@ -126,6 +130,8 @@ final class TravianGame
 
             $this->browser->visit(TravianRoute::rallyPointFarmListRoute());
             $this->waitRandomizer(5);
+
+            $this->randomBreak();
 
             $buttonStartAllFarmList = $this->browser->driver->findElement(WebDriverBy::cssSelector('#raidList button.startAll'));
             $buttonStartAllFarmList->click();
@@ -334,5 +340,19 @@ final class TravianGame
         $seconds = $probabilityResult ? random_int($minWaitSeconds, $maxWaitSeconds) : 1;
         Log::channel('travian')->info("Delay: $seconds sec");
         sleep($seconds);
+    }
+
+    /**
+     * @throws Exception
+     * @throws Throwable
+     */
+    private function randomBreak(float $probability = 0.1): void
+    {
+        $chances = 10;
+        $outOf = intval(ceil($chances / $probability));
+
+        $probabilityResult = Lottery::odds($chances, $outOf)->choose();
+
+        throw_if($probabilityResult, new GameRandomBreakException());
     }
 }

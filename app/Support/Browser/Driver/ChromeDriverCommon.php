@@ -30,26 +30,22 @@ class ChromeDriverCommon implements DriverContract
 
     public function getDriver(): RemoteWebDriver
     {
-
-        $userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36';
-
-
-        $options = (new ChromeOptions())->addArguments(
-            array_filter(
-                [
-                    '--no-sandbox',
-                    '--disable-gpu',
-                    '--window-size=1920,1080',
-                    '--ignore-certificate-errors',
-                    '--ignore-ssl-errors',
-                    '--disable-web-security',
-                    '--allow-running-insecure-content',
-                    '--user-data-dir=' . config('laravel-console-dusk.paths.data'),
-                    '--user-agent=' . config('laravel-console-dusk.browser.user_agent'),
-                    $this->runHeadless(),
-                ]
-            )
+        $optionList = array_filter(
+            [
+                '--no-sandbox',
+                '--disable-gpu',
+                '--window-size=1920,1080',
+                '--ignore-certificate-errors',
+                '--ignore-ssl-errors',
+                '--disable-web-security',
+                '--allow-running-insecure-content',
+                '--user-data-dir=' . config('laravel-console-dusk.paths.data'),
+                '--user-agent=' . config('laravel-console-dusk.browser.user_agent'),
+                $this->runHeadless(),
+            ]
         );
+
+        $options = (new ChromeOptions())->addArguments($optionList);
 
         $options->setExperimentalOption('excludeSwitches', ['enable-automation']);
 
