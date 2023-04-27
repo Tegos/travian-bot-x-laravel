@@ -46,7 +46,7 @@ class ChromeDriverCommon implements DriverContract
                     '--allow-running-insecure-content',
                     '--user-data-dir=' . config('laravel-console-dusk.paths.data'),
                     '--user-agent=' . config('laravel-console-dusk.browser.user_agent'),
-                    //$this->runHeadless(),
+                    $this->runHeadless(),
                 ]
             )
         );
