@@ -25,5 +25,6 @@ return [
         'domain' => env('TRAVIAN_DOMAIN'),
         'login' => env('TRAVIAN_LOGIN'),
         'password' => env('TRAVIAN_PASSWORD'),
+        'farm_list_enabled' => boolval(env('TRAVIAN_FARM_LIST_ENABLED', 1)),
     ],
 ];

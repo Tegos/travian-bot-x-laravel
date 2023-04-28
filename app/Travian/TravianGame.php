@@ -117,7 +117,9 @@ final class TravianGame
 
         $this->performRandomAction();
 
-        if ($this->isAuthenticated()) {
+        $farmListEnabled = config('services.travian.farm_list_enabled');
+
+        if ($this->isAuthenticated() && $farmListEnabled) {
 
             Log::channel('travian')->info(__FUNCTION__);
 
