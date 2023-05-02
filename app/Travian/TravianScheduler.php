@@ -12,6 +12,8 @@ final class TravianScheduler
 
     const FARM_LIST_ACTION = 'FARM_LIST_ACTION';
 
+    const AUCTION_SELLING = 'AUCTION_SELLING';
+
     /**
      * @throws Exception
      */
@@ -48,6 +50,19 @@ final class TravianScheduler
         });
 
         $expressionEndPart = '* * * *';
+
+        return $randomMinutePart . ' ' . $expressionEndPart;
+    }
+
+    public static function actionAuctionSellingCronExpression(): string
+    {
+        $key = self::AUCTION_SELLING;
+
+        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addMinutes(30), function () {
+            return random_int(0, 59);
+        });
+
+        $expressionEndPart = '7,9 * * *';
 
         return $randomMinutePart . ' ' . $expressionEndPart;
     }

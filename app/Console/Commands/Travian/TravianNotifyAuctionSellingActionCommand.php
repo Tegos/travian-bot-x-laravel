@@ -8,11 +8,11 @@ use Exception;
 use Illuminate\Console\Command;
 use Laravel\Dusk\Browser;
 
-final class TravianRunFarmListActionCommand extends Command
+final class TravianNotifyAuctionSellingActionCommand extends Command
 {
-    protected $signature = 'travian:run-farm-list-action';
+    protected $signature = 'travian:notify-action-selling-action';
 
-    protected $description = 'Perform start farm list action';
+    protected $description = 'Perform notify auction selling action';
 
     /**
      * @throws Exception
@@ -25,7 +25,7 @@ final class TravianRunFarmListActionCommand extends Command
 
             $travianGame = new TravianGame($browser);
 
-            $travianGame->performRunFarmListAction();
+            $travianGame->performNotifyAuctionSellingAction();
 
         });
 

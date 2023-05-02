@@ -2,10 +2,11 @@
 
 namespace App\Travian;
 
-use App\Exceptions\Import\InputFileUkraineLocalitiesEmptyException;
 use App\Exceptions\Travian\GameRandomBreakException;
+use App\Support\Helpers\StringHelper;
+use App\View\Table\ConsoleBaseTable;
+use App\View\Table\HtmlTable;
 use Carbon\Carbon;
-use DateTime;
 use Exception;
 use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\WebDriverBy;
@@ -52,6 +53,10 @@ final class TravianGame
             $this->browser->waitForReload();
             $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
+
+        $this->waitRandomizer(3);
+
+        $this->browser->screenshot(Str::snake(__FUNCTION__));
     }
 
     public function isAuthenticated(): bool
@@ -142,6 +147,90 @@ final class TravianGame
             $driver->wait(10, 1000)->until(
                 WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::cssSelector('#raidList button.cancelDispatch'))
             );
+
+            $this->waitRandomizer(3);
+
+            $this->browser->screenshot(Str::snake(__FUNCTION__));
+        }
+    }
+
+    /**
+     * @throws TimeoutException
+     * @throws Exception
+     * @throws Throwable
+     */
+    public function performNotifyAuctionSellingAction(): void
+    {
+        $this->performLoginAction();
+
+        $this->waitRandomizer(3);
+
+        if ($this->isAuthenticated()) {
+
+            Log::channel('travian')->info(__FUNCTION__);
+
+            $driver = $this->browser->driver;
+
+            $this->browser->visit(TravianRoute::mainRoute());
+            $this->waitRandomizer(3);
+
+            $this->browser->visit(TravianRoute::auctionSellRoute());
+            $this->waitRandomizer(1);
+
+            $scripts = $driver->findElements(WebDriverBy::tagName('script'));
+
+            $auctionDataScript = '';
+            foreach ($scripts as $script) {
+                $scriptContent = $script->getDomProperty('innerHTML');
+
+                if (Str::contains($scriptContent, ['checkSum', 'HeroAuction '])) {
+                    $auctionDataScript = $scriptContent;
+                    break;
+                }
+            }
+
+            // get json from string
+            preg_match('/(\{.+})/', $auctionDataScript, $result);
+            $dataJsonString = $result[0] ?? '';
+
+            $auctionData = json_decode($dataJsonString, true) ?? [];
+
+            if (!empty($auctionData)) {
+                $selling = $auctionData['sell']['auctions'];
+                $sellingItems = $selling['data'];
+
+                foreach ($sellingItems as $k => $sellingItem) {
+
+                    unset($sellingItems[$k]['description']);
+                    unset($sellingItems[$k]['couldBeDeleted']);
+                    unset($sellingItems[$k]['identifier']);
+                    unset($sellingItems[$k]['obfuscatedId']);
+
+                    // formatting
+                    $name = StringHelper::normalizeString($sellingItems[$k]['nameFormatted']);
+                    $sellingItems[$k]['nameFormatted'] = $name;
+
+                    $gameDateNow = Carbon::now()->timezone(config('services.travian.timezone'));
+
+                    $timeEnd = Carbon::createFromTimestamp($sellingItem['time_end'])
+                        ->timezone(config('services.travian.timezone'));
+
+                    $sellingItems[$k]['time_end_date'] = $timeEnd->format('d.m.Y H:i:s');
+                    $sellingItems[$k]['left_time'] = $timeEnd->diff($gameDateNow)->format('%H:%I:%S');
+
+                }
+
+                if (count($sellingItems) > 0) {
+                    $headers = array_keys(Arr::first($sellingItems));
+                    $tableHtml = new HtmlTable($sellingItems, $headers);
+                    $consoleTable = new ConsoleBaseTable($sellingItems, $headers);
+
+                    Log::channel('travian')->info($consoleTable);
+
+                    //Mail::to(config('mail.to'))->send(new TravianAuctionSellingNotification($tableHtml));
+                }
+            }
+
             $this->waitRandomizer(3);
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
@@ -173,8 +262,6 @@ final class TravianGame
             Log::channel('travian')->info(__FUNCTION__);
 
             $routes = Arr::random($listRoutes, 3);
-
-            $driver = $this->browser->driver;
 
             foreach ($routes as $route) {
                 $this->browser->visit($route);
@@ -239,93 +326,6 @@ final class TravianGame
         }
 
         return $total_messages;
-    }
-
-    public function getServerDate(): DateTime
-    {
-        return Carbon::now(getenv('TIME_ZONE'));
-    }
-
-    public function getAuctionData(): array
-    {
-        $auction_url = '/hero/auction?action=sell';
-
-        $auction_page = $this->makeRequest(
-            [
-                'method' => 'get',
-                'url' => $auction_url
-            ]
-        );
-
-        $crawler = new Crawler($auction_page->getBody()->getContents());
-        $scripts = $crawler->filter('script')
-            ->reduce(function (Crawler $node) {
-                return strpos($node->text(), 'checkSum') !== false;
-            });
-
-        $check_sum_script = $scripts->first()->html();
-
-
-        $lines = explode("\n", str_replace(["\r\n", "\n\r", "\r"], "\n", $check_sum_script));
-
-
-        $check_sum_string = '';
-        foreach ($lines as $line) {
-            if (strpos($line, 'checkSum') !== false) {
-                $check_sum_string = $line;
-            }
-        }
-
-        $check_sum_string = trim($check_sum_string);
-        $check_sum_string = rtrim($check_sum_string, ', {');
-        $check_sum_string = rtrim($check_sum_string, '}');
-        $check_sum_string = str_replace('data:', '', $check_sum_string);
-        $check_sum_string = trim($check_sum_string);
-
-        $result = [];
-        $data = json_decode($check_sum_string, true);
-        if (!empty($data)) {
-            $result = $data ?? [];
-        }
-
-        return $result;
-    }
-
-    public function notifySellingAuction(): string
-    {
-        $auction_js_data = $this->getAuctionData();
-        $auction_sell_data = $auction_js_data['sell'];
-        $selling = $auction_sell_data['currentlySelling'];
-
-        $game_server_date = $this->getServerDate();
-
-        foreach ($selling as $k => $item) {
-            unset($selling[$k]['description']);
-            unset($selling[$k]['couldBeDeleted']);
-            unset($selling[$k]['identifier']);
-            unset($selling[$k]['obfuscatedId']);
-
-            $date_end = Carbon::createFromTimestamp($item['time_end'])->timezone(getenv('TIME_ZONE'));
-            $date_end_local = Carbon::createFromTimestamp($item['time_end'])->timezone(getenv('TIME_ZONE_LOCAL'));
-            $selling[$k]['time_end_date'] = $date_end->format('d.m.Y H:i:s');
-            $selling[$k]['left_time'] = $date_end->diff($game_server_date)->format('%H:%I:%S');
-
-            $selling[$k]['time_end_date_local'] = $date_end_local->format('d.m.Y H:i:s');
-
-        }
-
-        if (count($selling) > 0) {
-            $table = HtmlTable::build($selling);
-
-            SendMail::send([
-                'subject' => 'Selling Auction',
-                'body' => $table,
-                'is_body_html' => true,
-            ]);
-
-            return $table;
-        }
-        return '';
     }
 
     /**

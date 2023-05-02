@@ -4,6 +4,7 @@ namespace App\Console;
 
 use App\Console\Commands\Travian\TravianInitLoginActionCommand;
 use App\Console\Commands\Travian\TravianRunFarmListActionCommand;
+use App\Mail\TravianAuctionSellingNotification;
 use App\Travian\TravianScheduler;
 use Exception;
 use Illuminate\Console\Scheduling\Schedule;
@@ -17,13 +18,17 @@ final class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // daily at [5-23]
+        // login
         $schedule->command(TravianInitLoginActionCommand::class)
             ->cron(TravianScheduler::actionLoginScheduleCronExpression());
 
         // run farm lists
         $schedule->command(TravianRunFarmListActionCommand::class)
             ->cron(TravianScheduler::actionRunFarmListCronExpression());
+
+        // auction selling
+        $schedule->command(TravianAuctionSellingNotification::class)
+            ->cron(TravianScheduler::actionAuctionSellingCronExpression());
     }
 
     /**

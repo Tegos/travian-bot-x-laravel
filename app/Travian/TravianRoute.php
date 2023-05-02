@@ -51,6 +51,11 @@ final class TravianRoute
         return self::buildUrl('hero/auction?tab=buy');
     }
 
+    public static function auctionSellRoute(): string
+    {
+        return self::buildUrl('hero/auction?tab=sell');
+    }
+
     protected static function buildUrl(string $path = ''): string
     {
         $domain = trim(config('services.travian.domain'), '/');

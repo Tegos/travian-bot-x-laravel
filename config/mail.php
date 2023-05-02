@@ -121,4 +121,6 @@ return [
         ],
     ],
 
+    'to' => env('MAIL_TO', 'hello@example.com'),
+
 ];
