@@ -3,8 +3,8 @@
 namespace App\Console;
 
 use App\Console\Commands\Travian\TravianInitLoginActionCommand;
+use App\Console\Commands\Travian\TravianNotifyAuctionSellingActionCommand;
 use App\Console\Commands\Travian\TravianRunFarmListActionCommand;
-use App\Mail\TravianAuctionSellingNotification;
 use App\Travian\TravianScheduler;
 use Exception;
 use Illuminate\Console\Scheduling\Schedule;
@@ -27,7 +27,7 @@ final class Kernel extends ConsoleKernel
             ->cron(TravianScheduler::actionRunFarmListCronExpression());
 
         // auction selling
-        $schedule->command(TravianAuctionSellingNotification::class)
+        $schedule->command(TravianNotifyAuctionSellingActionCommand::class)
             ->cron(TravianScheduler::actionAuctionSellingCronExpression());
     }
 
