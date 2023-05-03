@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\Travian\TravianCheckRunFarmListActionCommand;
 use App\Console\Commands\Travian\TravianInitLoginActionCommand;
 use App\Console\Commands\Travian\TravianNotifyAuctionSellingActionCommand;
 use App\Console\Commands\Travian\TravianRunFarmListActionCommand;
@@ -25,6 +26,10 @@ final class Kernel extends ConsoleKernel
         // run farm lists
         $schedule->command(TravianRunFarmListActionCommand::class)
             ->cron(TravianScheduler::actionRunFarmListCronExpression());
+
+        // run check farm lists
+        $schedule->command(TravianCheckRunFarmListActionCommand::class)
+            ->cron(TravianScheduler::actionCheckRunFarmListCronExpression());
 
         // auction selling
         $schedule->command(TravianNotifyAuctionSellingActionCommand::class)

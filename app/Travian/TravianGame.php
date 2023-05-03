@@ -4,6 +4,7 @@ namespace App\Travian;
 
 use App\Exceptions\Travian\GameRandomBreakException;
 use App\Support\Helpers\StringHelper;
+use App\Travian\Enums\TravianTroopSelector;
 use App\View\Table\ConsoleBaseTable;
 use App\View\Table\HtmlTable;
 use Carbon\Carbon;
@@ -147,6 +148,51 @@ final class TravianGame
             $driver->wait(10, 1000)->until(
                 WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::cssSelector('#raidList button.cancelDispatch'))
             );
+
+            $this->waitRandomizer(3);
+
+            $this->browser->screenshot(Str::snake(__FUNCTION__));
+        }
+    }
+
+    /**
+     * @throws TimeoutException
+     * @throws Exception
+     * @throws Throwable
+     */
+    public function performCheckRunFarmListAction(): void
+    {
+        $limitHorses = 100;
+
+        $this->performLoginAction();
+
+        $this->waitRandomizer(5);
+
+        $farmListEnabled = config('services.travian.farm_list_enabled');
+
+        if ($this->isAuthenticated() && $farmListEnabled) {
+
+            Log::channel('travian')->info(__FUNCTION__);
+
+            $this->browser->visit(TravianRoute::mainRoute());
+            $this->waitRandomizer(5);
+
+            $troopsTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#troops'));
+
+            $troopsTableRows = $troopsTable->findElements(WebDriverBy::cssSelector('tr'));
+            $horsesCount = 0;
+
+            foreach ($troopsTableRows as $troopsTableRow) {
+                $theutatesThunders = $troopsTableRow->findElements(WebDriverBy::className(TravianTroopSelector::THEUTATES_THUNDERS));
+                if ($theutatesThunders) {
+                    $horsesCount = $troopsTableRow->findElement(WebDriverBy::className('num'))->getText();
+                }
+            }
+
+            if ($horsesCount > $limitHorses) {
+                Log::channel('travian')->info('Farm list start: horses limit');
+                $this->performRunFarmListAction();
+            }
 
             $this->waitRandomizer(3);
 

@@ -12,6 +12,8 @@ final class TravianScheduler
 
     const FARM_LIST_ACTION = 'FARM_LIST_ACTION';
 
+    const CHECK_FARM_LIST_ACTION = 'CHECK_FARM_LIST_ACTION';
+
     const AUCTION_SELLING = 'AUCTION_SELLING';
 
     /**
@@ -44,6 +46,19 @@ final class TravianScheduler
     public static function actionRunFarmListCronExpression(): string
     {
         $key = self::FARM_LIST_ACTION;
+
+        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addHour(), function () {
+            return random_int(0, 59);
+        });
+
+        $expressionEndPart = '* * * *';
+
+        return $randomMinutePart . ' ' . $expressionEndPart;
+    }
+
+    public static function actionCheckRunFarmListCronExpression(): string
+    {
+        $key = self::CHECK_FARM_LIST_ACTION;
 
         $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addHour(), function () {
             return random_int(0, 59);
