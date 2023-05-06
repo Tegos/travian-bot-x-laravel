@@ -3,13 +3,17 @@
 namespace App\Travian;
 
 use App\Exceptions\Travian\GameRandomBreakException;
+use App\Support\Helpers\NumberHelper;
 use App\Support\Helpers\StringHelper;
+use App\Travian\Enums\TravianAuctionCategoryPrice;
 use App\Travian\Enums\TravianTroopSelector;
 use App\View\Table\ConsoleBaseTable;
 use App\View\Table\HtmlTable;
 use Carbon\Carbon;
 use Exception;
 use Facebook\WebDriver\Exception\TimeoutException;
+use Facebook\WebDriver\Exception\UnsupportedOperationException;
+use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Illuminate\Support\Arr;
@@ -23,9 +27,12 @@ final class TravianGame
 {
     private Browser $browser;
 
+    private TravianGameService $travianGameService;
+
     public function __construct(Browser $browser)
     {
         $this->browser = $browser;
+        $this->travianGameService = new TravianGameService($this->browser);
     }
 
     /**
@@ -68,46 +75,6 @@ final class TravianGame
         $loginForm = $this->browser->resolver->find('#loginForm');
 
         return empty($loginForm);
-    }
-
-    /**
-     * @param $response_content
-     */
-    protected function setAjaxToken($response_content)
-    {
-        // set ajaxToken
-        $html = $response_content;
-        $crawler = new Crawler($html);
-
-        $scripts = $crawler->filter('script')
-            ->reduce(function (Crawler $node) {
-                return strpos($node->text(), 'eval') !== false;
-            });
-
-        $eval_script = $scripts->first()->text();
-
-        $lines = array_filter(explode(';', $eval_script));
-
-        $eval_string = '';
-        foreach ($lines as $line) {
-            if (strpos($line, 'eval') !== false) {
-                $eval_string = $line;
-            }
-        }
-
-        $regex = "/.*\(([^)]*)\)/";
-        preg_match($regex, $eval_string, $matches);
-
-        $atob_content = end($matches);
-        $atob_content = str_replace("'", '', $atob_content);
-        $content = base64_decode($atob_content);
-
-        $parts = explode('&&', $content);
-        $token = trim($parts[1] ?? '');
-        $token = str_replace("'", '', $token);
-
-        $this->ajaxToken = $token;
-
     }
 
     /**
@@ -215,31 +182,10 @@ final class TravianGame
 
             Log::channel('travian')->info(__FUNCTION__);
 
-            $driver = $this->browser->driver;
-
             $this->browser->visit(TravianRoute::mainRoute());
             $this->waitRandomizer(3);
 
-            $this->browser->visit(TravianRoute::auctionSellRoute());
-            $this->waitRandomizer(1);
-
-            $scripts = $driver->findElements(WebDriverBy::tagName('script'));
-
-            $auctionDataScript = '';
-            foreach ($scripts as $script) {
-                $scriptContent = $script->getDomProperty('innerHTML');
-
-                if (Str::contains($scriptContent, ['checkSum', 'HeroAuction '])) {
-                    $auctionDataScript = $scriptContent;
-                    break;
-                }
-            }
-
-            // get json from string
-            preg_match('/(\{.+})/', $auctionDataScript, $result);
-            $dataJsonString = $result[0] ?? '';
-
-            $auctionData = json_decode($dataJsonString, true) ?? [];
+            $auctionData = $this->travianGameService->getAuctionData();
 
             if (!empty($auctionData)) {
                 $selling = $auctionData['sell']['auctions'];
@@ -284,6 +230,79 @@ final class TravianGame
     }
 
     /**
+     * @throws UnsupportedOperationException
+     * @throws TimeoutException
+     * @throws Exception
+     * @throws Throwable
+     */
+    public function performAuctionBidsAction(): void
+    {
+        $this->performLoginAction();
+
+        $this->waitRandomizer(5);
+
+        if ($this->isAuthenticated()) {
+
+            Log::channel('travian')->info(__FUNCTION__);
+
+            $this->browser->visit(TravianRoute::mainRoute());
+            $this->waitRandomizer(3);
+
+            $auctionData = $this->travianGameService->getAuctionData();
+            $silverAmount = $auctionData['common']['silver'];
+            if ($silverAmount < 100) {
+                return;
+            }
+
+            $this->browser->visit(TravianRoute::auctionRoute());
+            $this->waitRandomizer(1);
+
+            $auctionTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#auction .currentBid'));
+
+            $auctionBidRows = $auctionTable->findElements(WebDriverBy::cssSelector('tbody tr'));
+
+            $bidCount = 0;
+
+            foreach ($auctionBidRows as $auctionBidRow) {
+                /** @var RemoteWebElement $bidButton */
+                $bidButton = Arr::first($auctionBidRow->findElements(WebDriverBy::className('bidButton')));
+
+                if ($bidButton) {
+                    $currentBidPrice = $auctionBidRow->findElement(WebDriverBy::cssSelector('td.silver'))->getText();
+                    $name = $auctionBidRow->findElement(WebDriverBy::cssSelector('td.name'))->getText();
+                    $amount = filter_var($name, FILTER_SANITIZE_NUMBER_INT);
+                    $itemCategoryElement = $auctionBidRow->findElement(WebDriverBy::cssSelector('td img.itemCategory'));
+                    $itemCategoryClasses = explode(' ', $itemCategoryElement->getAttribute('class'));
+                    $itemCategoryClass = Arr::first($itemCategoryClasses, function ($cssClass) {
+                        return $cssClass !== 'itemCategory';
+                    });
+
+                    $itemCategory = Str::replace('itemCategory_', '', $itemCategoryClass);
+
+                    $price = TravianAuctionCategoryPrice::getPrice($itemCategory);
+                    $bidPrice = $amount * NumberHelper::numberRandomizer($price, 5, 20);
+
+                    if ($bidPrice > $currentBidPrice) {
+                        $bidButton->click();
+                        $this->waitRandomizer(1);
+
+                        /** @var RemoteWebElement $bidInput */
+                        $bidInput = Arr::first($auctionTable->findElements(WebDriverBy::name('maxBid')));
+
+                        $bidInput->sendKeys($bidPrice)->submit();
+                        $this->waitRandomizer(1);
+                        $bidCount++;
+                    }
+                }
+            }
+
+            $this->browser->screenshot(Str::snake(__FUNCTION__));
+
+            Log::channel('travian')->info($bidCount . ' bids made');
+        }
+    }
+
+    /**
      * @throws TimeoutException
      * @throws Exception
      */
@@ -316,62 +335,6 @@ final class TravianGame
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
-    }
-
-    public function clearOffensiveReport(): int
-    {
-        // offensive - without losses
-        $url_report = '/report/offensive?opt=AAABAA==';
-        return $this->clearReport($url_report);
-    }
-
-    public function clearMerchantsReport(): int
-    {
-        // merchants
-        $url_report = '/report/other?opt=AAALAAwADQAOAA==';
-        return $this->clearReport($url_report);
-    }
-
-    public function clearReport($url_report): int
-    {
-        $total_messages = 0;
-
-        $reportsPage = $this->makeRequest(
-            [
-                'method' => 'get',
-                'url' => $url_report
-            ]
-        );
-
-        $crawler = new Crawler($reportsPage->getBody()->getContents());
-        $inputs = $crawler->filter('#reportsForm table tr td.sel input');
-
-        $input_array = [];
-
-        foreach ($inputs as $node) {
-            $element = new Crawler($node);
-            $id = $element->attr('value');
-            $input_array[] = $id;
-        }
-
-        $total_inputs = count($input_array);
-        $total_messages += $total_inputs;
-
-
-        if ($total_inputs > 0) {
-            $post_data = [
-                'ids' => $input_array,
-                'do' => 'delete',
-            ];
-
-            $this->makeRequest([
-                'method' => 'post',
-                'url' => '/report/offensive?page=1',
-                'body' => $post_data
-            ], true);
-        }
-
-        return $total_messages;
     }
 
     /**

@@ -16,6 +16,8 @@ final class TravianScheduler
 
     const AUCTION_SELLING = 'AUCTION_SELLING';
 
+    const AUCTION_BIDS = 'AUCTION_BIDS';
+
     /**
      * @throws Exception
      */
@@ -78,6 +80,19 @@ final class TravianScheduler
         });
 
         $expressionEndPart = '7,9 * * *';
+
+        return $randomMinutePart . ' ' . $expressionEndPart;
+    }
+
+    public static function actionAuctionBidsCronExpression(): string
+    {
+        $key = self::AUCTION_BIDS;
+
+        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addMinutes(30), function () {
+            return random_int(0, 59);
+        });
+
+        $expressionEndPart = '* * * *';
 
         return $randomMinutePart . ' ' . $expressionEndPart;
     }
