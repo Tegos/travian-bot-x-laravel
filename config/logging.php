@@ -132,6 +132,12 @@ return [
             'path' => storage_path('logs/travian.log'),
             'days' => 14,
         ],
+
+        'travian_auction' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/travian_auction.log'),
+            'days' => 14,
+        ],
     ],
 
 ];

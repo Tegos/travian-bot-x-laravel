@@ -8,7 +8,6 @@ use App\Support\Helpers\StringHelper;
 use App\Travian\Enums\TravianAuctionCategoryPrice;
 use App\Travian\Enums\TravianTroopSelector;
 use App\View\Table\ConsoleBaseTable;
-use App\View\Table\HtmlTable;
 use Carbon\Carbon;
 use Exception;
 use Facebook\WebDriver\Exception\TimeoutException;
@@ -214,12 +213,9 @@ final class TravianGame
 
                 if (count($sellingItems) > 0) {
                     $headers = array_keys(Arr::first($sellingItems));
-                    $tableHtml = new HtmlTable($sellingItems, $headers);
                     $consoleTable = new ConsoleBaseTable($sellingItems, $headers);
 
-                    Log::channel('travian')->info($consoleTable);
-
-                    //Mail::to(config('mail.to'))->send(new TravianAuctionSellingNotification($tableHtml));
+                    Log::channel('travian_auction')->info(PHP_EOL . $consoleTable);
                 }
             }
 
@@ -270,6 +266,8 @@ final class TravianGame
                 if ($bidButton) {
                     $currentBidPrice = $auctionBidRow->findElement(WebDriverBy::cssSelector('td.silver'))->getText();
                     $name = $auctionBidRow->findElement(WebDriverBy::cssSelector('td.name'))->getText();
+                    $name = StringHelper::normalizeString($name);
+
                     $amount = filter_var($name, FILTER_SANITIZE_NUMBER_INT);
                     $itemCategoryElement = $auctionBidRow->findElement(WebDriverBy::cssSelector('td img.itemCategory'));
                     $itemCategoryClasses = explode(' ', $itemCategoryElement->getAttribute('class'));
@@ -280,7 +278,9 @@ final class TravianGame
                     $itemCategory = Str::replace('itemCategory_', '', $itemCategoryClass);
 
                     $price = TravianAuctionCategoryPrice::getPrice($itemCategory);
-                    $bidPrice = $amount * NumberHelper::numberRandomizer($price, 5, 20);
+                    $price = NumberHelper::numberRandomizer($price, 3, 15);
+
+                    $bidPrice = $amount * $price;
 
                     if ($bidPrice > $currentBidPrice) {
                         $bidButton->click();
@@ -292,6 +292,8 @@ final class TravianGame
                         $bidInput->sendKeys($bidPrice)->submit();
                         $this->waitRandomizer(1);
                         $bidCount++;
+
+                        Log::channel('travian_auction')->info($name . ' ' . $itemCategory . ' ' . $price . ' ' . $bidPrice);
                     }
                 }
             }
