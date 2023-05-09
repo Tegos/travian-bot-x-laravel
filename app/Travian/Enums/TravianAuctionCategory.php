@@ -2,6 +2,8 @@
 
 namespace App\Travian\Enums;
 
+use ReflectionClass;
+
 final class TravianAuctionCategory
 {
     const HELMET = 'helmet';
@@ -19,4 +21,10 @@ final class TravianAuctionCategory
     const BOOK_OF_WISDOM = 'bookOfWisdom';
     const LAW_TABLETS = 'lawTablets';
     const ARTWORK = 'artWork';
+
+    public static function getCategories(): array
+    {
+        $refInstanceClass = new ReflectionClass(__CLASS__);
+        return $refInstanceClass->getConstants();
+    }
 }

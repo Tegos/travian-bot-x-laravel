@@ -2,21 +2,18 @@
 
 namespace App\Travian;
 
-use App\Support\Helpers\NumberHelper;
 use App\Support\Helpers\StringHelper;
 use App\Travian\Actions\BaseAction;
-use App\Travian\Enums\TravianAuctionBid;
-use App\Travian\Enums\TravianAuctionCategoryPrice;
+use App\Travian\Enums\TravianAuctionCategory;
 use App\Travian\Enums\TravianTroopSelector;
+use App\Travian\Helpers\TravianGameHelper;
 use App\View\Table\ConsoleBaseTable;
 use Carbon\Carbon;
 use Exception;
 use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\Exception\UnsupportedOperationException;
-use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
-use Facebook\WebDriver\WebDriverKeys;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -33,7 +30,7 @@ final class TravianGame extends BaseAction
     {
         $this->performLoginAction();
 
-        $this->waitRandomizer(5);
+        TravianGameHelper::waitRandomizer(5);
 
         $this->performRandomAction();
 
@@ -45,15 +42,15 @@ final class TravianGame extends BaseAction
 
             $driver = $this->browser->driver;
             $this->browser->visit(TravianRoute::mainRoute());
-            $this->waitRandomizer(5);
+            TravianGameHelper::waitRandomizer(5);
 
             $this->browser->visit(TravianRoute::rallyPointRoute());
-            $this->waitRandomizer(5);
+            TravianGameHelper::waitRandomizer(5);
 
             $this->browser->visit(TravianRoute::rallyPointFarmListRoute());
-            $this->waitRandomizer(5);
+            TravianGameHelper::waitRandomizer(5);
 
-            $this->randomBreak();
+            TravianGameHelper::randomBreak();
 
             $buttonStartAllFarmList = $this->browser->driver->findElement(WebDriverBy::cssSelector('#raidList button.startAll'));
             $buttonStartAllFarmList->click();
@@ -63,7 +60,7 @@ final class TravianGame extends BaseAction
                 WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::cssSelector('#raidList button.cancelDispatch'))
             );
 
-            $this->waitRandomizer(3);
+            TravianGameHelper::waitRandomizer(3);
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
@@ -80,7 +77,7 @@ final class TravianGame extends BaseAction
 
         $this->performLoginAction();
 
-        $this->waitRandomizer(5);
+        TravianGameHelper::waitRandomizer(5);
 
         $farmListEnabled = config('services.travian.farm_list_enabled');
 
@@ -89,7 +86,7 @@ final class TravianGame extends BaseAction
             Log::channel('travian')->info(__FUNCTION__);
 
             $this->browser->visit(TravianRoute::mainRoute());
-            $this->waitRandomizer(5);
+            TravianGameHelper::waitRandomizer(5);
 
             $troopsTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#troops'));
 
@@ -108,7 +105,7 @@ final class TravianGame extends BaseAction
                 $this->performRunFarmListAction();
             }
 
-            $this->waitRandomizer(3);
+            TravianGameHelper::waitRandomizer(3);
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
@@ -123,14 +120,14 @@ final class TravianGame extends BaseAction
     {
         $this->performLoginAction();
 
-        $this->waitRandomizer(3);
+        TravianGameHelper::waitRandomizer(3);
 
         if ($this->isAuthenticated()) {
 
             Log::channel('travian')->info(__FUNCTION__);
 
             $this->browser->visit(TravianRoute::mainRoute());
-            $this->waitRandomizer(3);
+            TravianGameHelper::waitRandomizer(3);
 
             $auctionData = $this->travianGameService->getAuctionData();
 
@@ -167,7 +164,7 @@ final class TravianGame extends BaseAction
                 }
             }
 
-            $this->waitRandomizer(3);
+            TravianGameHelper::waitRandomizer(3);
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
@@ -183,83 +180,74 @@ final class TravianGame extends BaseAction
     {
         $this->performLoginAction();
 
-        $this->waitRandomizer(5);
+        TravianGameHelper::waitRandomizer(5);
 
         if ($this->isAuthenticated()) {
 
             Log::channel('travian')->info(__FUNCTION__);
 
             $this->browser->visit(TravianRoute::mainRoute());
-            $this->waitRandomizer(3);
+            TravianGameHelper::waitRandomizer(3);
 
-            $auctionData = $this->travianGameService->getAuctionData();
-            $silverAmount = $auctionData['common']['silver'];
+            $silverAmount = $this->travianGameService->getSilverAmount();
             if ($silverAmount < 100) {
                 return;
             }
 
             $this->browser->visit(TravianRoute::auctionRoute());
-            $this->waitRandomizer(1);
+            TravianGameHelper::waitRandomizer(1);
 
-            $auctionTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#auction .currentBid'));
+            $this->travianGameService->performBids();
 
-            $auctionBidRows = $auctionTable->findElements(WebDriverBy::cssSelector('tbody tr'));
+            $this->browser->screenshot(Str::snake(__FUNCTION__));
+        }
+    }
 
-            $bidCount = 0;
+    /**
+     * @throws UnsupportedOperationException
+     * @throws TimeoutException
+     * @throws Exception
+     * @throws Throwable
+     */
+    public function performAuctionFullBidsAction(): void
+    {
+        $this->performLoginAction();
 
-            $ignoredItems = config('services.travian.auction_ignored_items');
+        TravianGameHelper::waitRandomizer(5);
 
-            foreach ($auctionBidRows as $auctionBidRow) {
-                /** @var RemoteWebElement $bidButton */
-                $bidButton = Arr::first($auctionBidRow->findElements(WebDriverBy::className('bidButton')));
+        if ($this->isAuthenticated()) {
 
-                if ($bidButton && $bidButton->getText() === TravianAuctionBid::BID) {
-                    $currentBidPrice = $auctionBidRow->findElement(WebDriverBy::cssSelector('td.silver'))->getText();
-                    $name = $auctionBidRow->findElement(WebDriverBy::cssSelector('td.name'))->getText();
-                    $name = StringHelper::normalizeString($name);
+            Log::channel('travian')->info(__FUNCTION__);
 
-                    // ignored items
-                    if (Str::contains($name, $ignoredItems)) {
-                        continue;
-                    }
+            $this->browser->visit(TravianRoute::mainRoute());
+            TravianGameHelper::waitRandomizer(3);
 
-                    $timerSecondsLeft = $auctionBidRow->findElement(WebDriverBy::cssSelector('td.time .timer'))->getAttribute('value');
+            $silverAmount = $this->travianGameService->getSilverAmount();
+            if ($silverAmount < 100) {
+                return;
+            }
 
-                    $amount = filter_var($name, FILTER_SANITIZE_NUMBER_INT);
-                    $itemCategoryElement = $auctionBidRow->findElement(WebDriverBy::cssSelector('td img.itemCategory'));
-                    $itemCategoryClasses = explode(' ', $itemCategoryElement->getAttribute('class'));
-                    $itemCategoryClass = Arr::first($itemCategoryClasses, function ($cssClass) {
-                        return $cssClass !== 'itemCategory';
-                    });
+            $this->browser->visit(TravianRoute::auctionRoute());
+            TravianGameHelper::waitRandomizer(1);
 
-                    $itemCategory = Str::replace('itemCategory_', '', $itemCategoryClass);
+            $categories = TravianAuctionCategory::getCategories();
 
-                    $price = TravianAuctionCategoryPrice::getPrice($itemCategory);
-                    $price = NumberHelper::numberRandomizer($price, 3, 15);
+            $filterContainer = $this->browser->driver->findElement(WebDriverBy::cssSelector('#auction #filter .filterContainer'));
 
-                    $bidPrice = $amount * $price;
+            foreach ($categories as $category) {
+                $buttonSelector = '[data-key="' . $category . '"]';
+                $buttonFilter = $filterContainer->findElement(WebDriverBy::cssSelector($buttonSelector));
 
-                    if ($bidPrice > $currentBidPrice && $timerSecondsLeft > 10) {
-                        $bidButton->click();
-                        $this->waitRandomizer(1);
+                TravianGameHelper::waitRandomizer(1);
+                $buttonFilter->click();
 
-                        /** @var RemoteWebElement $bidInput */
-                        $bidInput = Arr::first($auctionTable->findElements(WebDriverBy::name('maxBid')));
+                $this->browser->driver->wait()->until(TravianGameHelper::jqueryAjaxFinished());
+                TravianGameHelper::waitRandomizer(1);
 
-                        $bidInput->clear()->sendKeys($bidPrice);
-                        $this->waitRandomizer(0);
-                        $this->browser->screenshot(Str::snake(__FUNCTION__));
-                        $this->browser->driver->getKeyboard()->pressKey(WebDriverKeys::ENTER);
-                        $bidCount++;
-
-                        Log::channel('travian_auction')->info($name . ' ' . $itemCategory . ' ' . $price . ' ' . $bidPrice);
-                    }
-                }
+                $this->travianGameService->performBids();
             }
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
-
-            Log::channel('travian')->info($bidCount . ' bids made');
         }
     }
 }

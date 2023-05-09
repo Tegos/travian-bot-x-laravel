@@ -2,29 +2,16 @@
 
 namespace App\Travian\Actions;
 
-use App\Exceptions\Travian\GameRandomBreakException;
-use App\Support\Helpers\NumberHelper;
-use App\Support\Helpers\StringHelper;
-use App\Travian\Enums\TravianAuctionBid;
-use App\Travian\Enums\TravianAuctionCategoryPrice;
-use App\Travian\Enums\TravianTroopSelector;
+use App\Travian\Helpers\TravianGameHelper;
 use App\Travian\TravianGameService;
 use App\Travian\TravianRoute;
-use App\View\Table\ConsoleBaseTable;
-use Carbon\Carbon;
 use Exception;
 use Facebook\WebDriver\Exception\TimeoutException;
-use Facebook\WebDriver\Exception\UnsupportedOperationException;
-use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\WebDriverBy;
-use Facebook\WebDriver\WebDriverExpectedCondition;
-use Facebook\WebDriver\WebDriverKeys;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Lottery;
 use Illuminate\Support\Str;
 use Laravel\Dusk\Browser;
-use Throwable;
 
 abstract class BaseAction
 {
@@ -44,7 +31,7 @@ abstract class BaseAction
      */
     public function performLoginAction(): void
     {
-        $this->waitRandomizer(10);
+        TravianGameHelper::waitRandomizer(10);
 
         Log::channel('travian')->info(__FUNCTION__);
 
@@ -65,7 +52,7 @@ abstract class BaseAction
             $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
 
-        $this->waitRandomizer(3);
+        TravianGameHelper::waitRandomizer(3);
 
         $this->browser->screenshot(Str::snake(__FUNCTION__));
     }
@@ -98,7 +85,7 @@ abstract class BaseAction
             TravianRoute::auctionRoute(),
         ];
 
-        $this->waitRandomizer(5);
+        TravianGameHelper::waitRandomizer(5);
 
         if ($this->isAuthenticated()) {
 
@@ -108,40 +95,10 @@ abstract class BaseAction
 
             foreach ($routes as $route) {
                 $this->browser->visit($route);
-                $this->waitRandomizer(5);
+                TravianGameHelper::waitRandomizer(5);
             }
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
-    }
-
-    /**
-     * @throws Exception
-     */
-    protected function waitRandomizer(int $minWaitSeconds = 20, float $probability = 0.5): void
-    {
-        $chances = 10;
-        $outOf = intval(ceil($chances / $probability));
-        $probabilityResult = Lottery::odds($chances, $outOf)->choose();
-
-        $maxWaitSeconds = intval(ceil($minWaitSeconds + ($minWaitSeconds * 0.2)));
-
-        $seconds = $probabilityResult ? random_int($minWaitSeconds, $maxWaitSeconds) : 1;
-        Log::channel('travian')->info("Delay: $seconds sec");
-        sleep($seconds);
-    }
-
-    /**
-     * @throws Exception
-     * @throws Throwable
-     */
-    protected function randomBreak(float $probability = 0.1): void
-    {
-        $chances = 10;
-        $outOf = intval(ceil($chances / $probability));
-
-        $probabilityResult = Lottery::odds($chances, $outOf)->choose();
-
-        throw_if($probabilityResult, new GameRandomBreakException());
     }
 }
