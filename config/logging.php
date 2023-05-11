@@ -61,7 +61,7 @@ return [
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'l' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],
 
@@ -130,13 +130,14 @@ return [
         'travian' => [
             'driver' => 'daily',
             'path' => storage_path('logs/travian.log'),
-            'days' => 14,
+            'days' => 10,
+            'level' => env('LOG_LEVEL', 'info'),
         ],
 
         'travian_auction' => [
             'driver' => 'daily',
             'path' => storage_path('logs/travian_auction.log'),
-            'days' => 14,
+            'days' => 7,
         ],
     ],
 

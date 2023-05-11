@@ -24,7 +24,7 @@ final class TravianGameHelper
         $maxWaitSeconds = intval(ceil($minWaitSeconds + ($minWaitSeconds * 0.2)));
 
         $seconds = $probabilityResult ? random_int($minWaitSeconds, $maxWaitSeconds) : 1;
-        Log::channel('travian')->info("Delay: $seconds sec");
+        Log::channel('travian')->debug("Delay: $seconds sec");
         sleep($seconds);
     }
 
