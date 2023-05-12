@@ -58,12 +58,23 @@ final class TravianScheduler
         return $randomMinutePart . ' ' . $expressionEndPart;
     }
 
+    /**
+     * @throws Exception
+     */
     public static function actionCheckRunFarmListCronExpression(): string
     {
         $key = self::CHECK_FARM_LIST_ACTION;
+        $keyFarmList = self::FARM_LIST_ACTION;
 
-        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addHour(), function () {
-            return random_int(0, 59);
+        $randomMinutePart = random_int(0, 59);
+        $farmListMinutePart = Cache::get($keyFarmList . 'minute-part');
+
+        while ($randomMinutePart === $farmListMinutePart) {
+            $randomMinutePart = random_int(0, 59);
+        }
+
+        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addHour(), function () use ($randomMinutePart) {
+            return $randomMinutePart;
         });
 
         $expressionEndPart = '* * * *';
