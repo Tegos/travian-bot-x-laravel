@@ -33,7 +33,7 @@ abstract class BaseAction
     {
         TravianGameHelper::waitRandomizer(10);
 
-        Log::channel('travian')->info(__FUNCTION__);
+        Log::channel('travian')->debug(__FUNCTION__);
 
         if (!$this->isAuthenticated()) {
             Log::channel('travian')->info('Input login/password');
@@ -89,7 +89,7 @@ abstract class BaseAction
 
         if ($this->isAuthenticated()) {
 
-            Log::channel('travian')->info(__FUNCTION__);
+            Log::channel('travian')->debug(__FUNCTION__);
 
             $routes = Arr::random($listRoutes, 3);
 

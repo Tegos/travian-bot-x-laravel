@@ -60,7 +60,7 @@ final class TravianGame extends BaseAction
                 WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::cssSelector('#raidList button.cancelDispatch'))
             );
 
-            TravianGameHelper::waitRandomizer(3);
+            TravianGameHelper::waitRandomizer(15);
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
