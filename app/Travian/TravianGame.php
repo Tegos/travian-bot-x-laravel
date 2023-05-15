@@ -38,8 +38,6 @@ final class TravianGame extends BaseAction
 
         if ($this->isAuthenticated() && $farmListEnabled) {
 
-            Log::channel('travian')->info(__FUNCTION__);
-
             $driver = $this->browser->driver;
             $this->browser->visit(TravianRoute::mainRoute());
             TravianGameHelper::waitRandomizer(5);
@@ -51,6 +49,8 @@ final class TravianGame extends BaseAction
             TravianGameHelper::waitRandomizer(5);
 
             TravianGameHelper::randomBreak();
+
+            Log::channel('travian')->info(__FUNCTION__);
 
             $buttonStartAllFarmList = $this->browser->driver->findElement(WebDriverBy::cssSelector('#raidList button.startAll'));
             $buttonStartAllFarmList->click();
