@@ -6,17 +6,17 @@ use Illuminate\Support\Str;
 
 final class TravianAuctionCategoryPrice
 {
-    const HELMET = 123;
-    const BODY = 123;
+    const HELMET = 111;
+    const BODY = 111;
     const LEFT_HAND = 105;
-    const RIGHT_HAND = 123;
-    const SHOES = 222;
-    const HORSE = 555;
-    const BANDAGE25 = 10;
-    const BANDAGE33 = 15;
-    const CAGE = 15;
-    const SCROLL = 25;
-    const OINTMENT = 15;
+    const RIGHT_HAND = 111;
+    const SHOES = 155;
+    const HORSE = 222;
+    const BANDAGE25 = 5;
+    const BANDAGE33 = 10;
+    const CAGE = 10;
+    const SCROLL = 15;
+    const OINTMENT = 10;
     const BUCKET_OF_WATER = 555;
     const BOOK_OF_WISDOM = 222;
     const LAW_TABLETS = 15;

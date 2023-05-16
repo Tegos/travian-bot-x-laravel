@@ -4,6 +4,8 @@ namespace App\Travian\Helpers;
 
 use App\Exceptions\Travian\GameRandomBreakException;
 use Exception;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Lottery;
 use Throwable;
@@ -34,10 +36,20 @@ final class TravianGameHelper
      */
     public static function randomBreak(float $probability = 0.1): void
     {
+        $key = __FUNCTION__;
         $chances = 10;
         $outOf = intval(ceil($chances / $probability));
 
+        $previous = Cache::get($key);
+        if ($previous) {
+            return;
+        }
+
         $probabilityResult = Lottery::odds($chances, $outOf)->choose();
+
+        if ($probabilityResult) {
+            Cache::put($key, 1, Carbon::now()->addHour());
+        }
 
         throw_if($probabilityResult, new GameRandomBreakException());
     }
