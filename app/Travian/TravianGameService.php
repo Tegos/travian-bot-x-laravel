@@ -138,6 +138,6 @@ final class TravianGameService
             }
         }
 
-        Log::channel('travian')->info($bidCount . ' bids made');
+        Log::channel('travian_auction')->info($bidCount . ' bids made');
     }
 }

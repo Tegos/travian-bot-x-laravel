@@ -48,8 +48,6 @@ final class TravianGame extends BaseAction
             $this->browser->visit(TravianRoute::rallyPointFarmListRoute());
             TravianGameHelper::waitRandomizer(5);
 
-            TravianGameHelper::randomBreak();
-
             Log::channel('travian')->info(__FUNCTION__);
 
             $buttonStartAllFarmList = $this->browser->driver->findElement(WebDriverBy::cssSelector('#raidList button.startAll'));
@@ -83,7 +81,7 @@ final class TravianGame extends BaseAction
 
         if ($this->isAuthenticated() && $farmListEnabled) {
 
-            Log::channel('travian')->info(__FUNCTION__);
+            Log::channel('travian')->debug(__FUNCTION__);
 
             $this->browser->visit(TravianRoute::mainRoute());
             TravianGameHelper::waitRandomizer(5);
@@ -101,7 +99,7 @@ final class TravianGame extends BaseAction
             }
 
             if ($horsesCount > $limitHorses) {
-                Log::channel('travian')->info('Farm list start: horses limit');
+                Log::channel('travian')->info('performRunFarmListAction - check farm: horses limit');
                 $this->performRunFarmListAction();
             }
 
@@ -184,7 +182,9 @@ final class TravianGame extends BaseAction
 
         if ($this->isAuthenticated()) {
 
-            Log::channel('travian')->info(__FUNCTION__);
+            TravianGameHelper::randomBreak();
+
+            Log::channel('travian_auction')->info(__FUNCTION__);
 
             $this->browser->visit(TravianRoute::mainRoute());
             TravianGameHelper::waitRandomizer(3);
@@ -217,7 +217,7 @@ final class TravianGame extends BaseAction
 
         if ($this->isAuthenticated()) {
 
-            Log::channel('travian')->info(__FUNCTION__);
+            Log::channel('travian_auction')->info(__FUNCTION__);
 
             $this->browser->visit(TravianRoute::mainRoute());
             TravianGameHelper::waitRandomizer(3);
