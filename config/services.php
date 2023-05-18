@@ -28,5 +28,6 @@ return [
         'farm_list_enabled' => boolval(env('TRAVIAN_FARM_LIST_ENABLED', 1)),
         'timezone' => env('TRAVIAN_TIMEZONE'),
         'auction_ignored_items' => explode(',', env('TRAVIAN_AUCTION_IGNORED_ITEMS')),
+        'min_horses_amount' => env('TRAVIAN_MIN_HORSES_AMOUNT', 100),
     ],
 ];

@@ -7,6 +7,7 @@ use App\Support\Helpers\NumberHelper;
 use App\Support\Helpers\StringHelper;
 use App\Travian\Enums\TravianAuctionBid;
 use App\Travian\Enums\TravianAuctionCategoryPrice;
+use App\Travian\Enums\TravianTroopSelector;
 use App\Travian\Helpers\TravianGameHelper;
 use Exception;
 use Facebook\WebDriver\Remote\RemoteWebElement;
@@ -139,5 +140,29 @@ final class TravianGameService
         }
 
         Log::channel('travian_auction')->info($bidCount . ' bids made');
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getHorsesAmount(): int
+    {
+        $this->browser->visit(TravianRoute::mainRoute());
+        TravianGameHelper::waitRandomizer(5);
+
+        $troopsTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#troops'));
+
+        $troopsTableRows = $troopsTable->findElements(WebDriverBy::cssSelector('tr'));
+        $horsesCount = 0;
+
+        foreach ($troopsTableRows as $troopsTableRow) {
+            $theutatesThunders = $troopsTableRow->findElements(WebDriverBy::className(TravianTroopSelector::THEUTATES_THUNDERS));
+            if ($theutatesThunders) {
+                $horsesCount = $troopsTableRow->findElement(WebDriverBy::className('num'))->getText();
+                break;
+            }
+        }
+
+        return intval($horsesCount);
     }
 }

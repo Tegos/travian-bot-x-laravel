@@ -5,7 +5,6 @@ namespace App\Travian;
 use App\Support\Helpers\StringHelper;
 use App\Travian\Actions\BaseAction;
 use App\Travian\Enums\TravianAuctionCategory;
-use App\Travian\Enums\TravianTroopSelector;
 use App\Travian\Helpers\TravianGameHelper;
 use App\View\Table\ConsoleBaseTable;
 use Carbon\Carbon;
@@ -15,6 +14,7 @@ use Facebook\WebDriver\Exception\UnsupportedOperationException;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -45,6 +45,14 @@ final class TravianGame extends BaseAction
             $this->browser->visit(TravianRoute::rallyPointRoute());
             TravianGameHelper::waitRandomizer(5);
 
+            $horsesAmount = $this->travianGameService->getHorsesAmount();
+
+            if ($horsesAmount < config('services.travian.min_horses_amount')) {
+                Log::channel('travian')->debug('Not enough horses');
+            }
+
+            Log::channel('travian')->debug($horsesAmount . ' horses');
+
             $this->browser->visit(TravianRoute::rallyPointFarmListRoute());
             TravianGameHelper::waitRandomizer(5);
 
@@ -60,50 +68,9 @@ final class TravianGame extends BaseAction
 
             TravianGameHelper::waitRandomizer(15);
 
-            $this->browser->screenshot(Str::snake(__FUNCTION__));
-        }
-    }
-
-    /**
-     * @throws TimeoutException
-     * @throws Exception
-     * @throws Throwable
-     */
-    public function performCheckRunFarmListAction(): void
-    {
-        $limitHorses = 100;
-
-        $this->performLoginAction();
-
-        TravianGameHelper::waitRandomizer(5);
-
-        $farmListEnabled = config('services.travian.farm_list_enabled');
-
-        if ($this->isAuthenticated() && $farmListEnabled) {
-
-            Log::channel('travian')->debug(__FUNCTION__);
-
-            $this->browser->visit(TravianRoute::mainRoute());
-            TravianGameHelper::waitRandomizer(5);
-
-            $troopsTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#troops'));
-
-            $troopsTableRows = $troopsTable->findElements(WebDriverBy::cssSelector('tr'));
-            $horsesCount = 0;
-
-            foreach ($troopsTableRows as $troopsTableRow) {
-                $theutatesThunders = $troopsTableRow->findElements(WebDriverBy::className(TravianTroopSelector::THEUTATES_THUNDERS));
-                if ($theutatesThunders) {
-                    $horsesCount = $troopsTableRow->findElement(WebDriverBy::className('num'))->getText();
-                }
-            }
-
-            if ($horsesCount > $limitHorses) {
-                Log::channel('travian')->info('performRunFarmListAction - check farm: horses limit');
-                $this->performRunFarmListAction();
-            }
-
-            TravianGameHelper::waitRandomizer(3);
+            // set another run delay
+            $now = Carbon::now()->addMinutes(random_int(21, 33));
+            Cache::set(TravianScheduler::CHECK_FARM_LIST_ACTION . 'minute-part', $now->minute);
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
