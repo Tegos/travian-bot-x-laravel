@@ -14,6 +14,8 @@ final class TravianScheduler
 
     const CHECK_FARM_LIST_ACTION = 'CHECK_FARM_LIST_ACTION';
 
+    const FARM_LIST_CONFIRM_ACTION = 'FARM_LIST_CONFIRM_ACTION';
+
     const AUCTION_SELLING = 'AUCTION_SELLING';
 
     const AUCTION_BIDS = 'AUCTION_BIDS';
@@ -72,6 +74,24 @@ final class TravianScheduler
         while ($randomMinutePart === $farmListMinutePart) {
             $randomMinutePart = random_int(0, 59);
         }
+
+        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addHour(), function () use ($randomMinutePart) {
+            return $randomMinutePart;
+        });
+
+        $expressionEndPart = '* * * *';
+
+        return $randomMinutePart . ' ' . $expressionEndPart;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public static function actionConfirmRunFarmListCronExpression(): string
+    {
+        $key = self::FARM_LIST_CONFIRM_ACTION;
+
+        $randomMinutePart = random_int(23, 33);
 
         $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addHour(), function () use ($randomMinutePart) {
             return $randomMinutePart;
