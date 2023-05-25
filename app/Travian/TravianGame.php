@@ -49,6 +49,7 @@ final class TravianGame extends BaseAction
 
             if ($horsesAmount < config('services.travian.min_horses_amount')) {
                 Log::channel('travian')->debug('Not enough horses');
+                return;
             }
 
             Log::channel('travian')->debug($horsesAmount . ' horses');
