@@ -27,6 +27,8 @@ final class TravianAuctionFullBidsActionCommand extends Command
 
             $travianGame->performAuctionFullBidsAction();
 
+            $browser->quit();
+
         });
 
         return self::SUCCESS;

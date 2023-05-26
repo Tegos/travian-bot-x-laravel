@@ -35,6 +35,8 @@ final class BrowserInfoCommand extends Command
 
             $browser->screenshot('browser-size-info');
 
+            $browser->quit();
+
         });
 
         return self::SUCCESS;

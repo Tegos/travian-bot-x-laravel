@@ -27,6 +27,8 @@ final class TravianRunFarmListActionCommand extends Command
 
             $travianGame->performRunFarmListAction();
 
+            $browser->quit();
+
         });
 
         return self::SUCCESS;

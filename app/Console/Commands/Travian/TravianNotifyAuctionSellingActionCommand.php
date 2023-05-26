@@ -27,6 +27,8 @@ final class TravianNotifyAuctionSellingActionCommand extends Command
 
             $travianGame->performNotifyAuctionSellingAction();
 
+            $browser->quit();
+
         });
 
         return self::SUCCESS;
