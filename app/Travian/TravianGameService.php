@@ -148,11 +148,9 @@ final class TravianGameService
     public function getHorsesAmount(): int
     {
         $this->browser->visit(TravianRoute::mainRoute());
-        TravianGameHelper::waitRandomizer(5);
+        TravianGameHelper::waitRandomizer(3);
 
-        $troopsTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#troops'));
-
-        $troopsTableRows = $troopsTable->findElements(WebDriverBy::cssSelector('tr'));
+        $troopsTableRows = $this->browser->driver->findElements(WebDriverBy::cssSelector('#troops tr'));
         $horsesCount = 0;
 
         foreach ($troopsTableRows as $troopsTableRow) {

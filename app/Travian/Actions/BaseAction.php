@@ -85,17 +85,17 @@ abstract class BaseAction
             TravianRoute::auctionRoute(),
         ];
 
-        TravianGameHelper::waitRandomizer(5);
+        TravianGameHelper::waitRandomizer(3);
 
         if ($this->isAuthenticated()) {
 
             Log::channel('travian')->debug(__FUNCTION__);
 
-            $routes = Arr::random($listRoutes, 3);
+            $routes = Arr::random($listRoutes, random_int(2, 3));
 
             foreach ($routes as $route) {
                 $this->browser->visit($route);
-                TravianGameHelper::waitRandomizer(5);
+                TravianGameHelper::waitRandomizer(3);
             }
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));

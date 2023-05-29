@@ -30,7 +30,7 @@ final class TravianGame extends BaseAction
     {
         $this->performLoginAction();
 
-        TravianGameHelper::waitRandomizer(5);
+        TravianGameHelper::waitRandomizer(3);
 
         $this->performRandomAction();
 
@@ -39,13 +39,11 @@ final class TravianGame extends BaseAction
         if ($this->isAuthenticated() && $farmListEnabled) {
 
             $driver = $this->browser->driver;
-            $this->browser->visit(TravianRoute::mainRoute());
-            TravianGameHelper::waitRandomizer(5);
-
-            $this->browser->visit(TravianRoute::rallyPointRoute());
-            TravianGameHelper::waitRandomizer(5);
 
             $horsesAmount = $this->travianGameService->getHorsesAmount();
+
+            $this->browser->visit(TravianRoute::rallyPointRoute());
+            TravianGameHelper::waitRandomizer(3);
 
             if ($horsesAmount < config('services.travian.min_horses_amount')) {
                 Log::channel('travian')->debug('Not enough horses');

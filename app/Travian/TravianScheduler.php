@@ -2,6 +2,8 @@
 
 namespace App\Travian;
 
+use App\Support\Helpers\NumberHelper;
+use Carbon\CarbonInterface;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -47,17 +49,46 @@ final class TravianScheduler
         return $randomMinutePart . ' ' . $expressionEndPart;
     }
 
+    /**
+     * @throws Exception
+     */
     public static function actionRunFarmListCronExpression(): string
     {
         $key = self::FARM_LIST_ACTION;
+        $now = Carbon::now();
+        $currentHour = $now->hour;
 
-        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addHour(), function () {
-            return random_int(0, 59);
-        });
+        $perHour = 3;
+        $minDiff = 15;
+        $maxDiff = 25;
 
         $expressionEndPart = '* * * *';
 
-        return $randomMinutePart . ' ' . $expressionEndPart;
+        $hours = CarbonInterface::HOURS_PER_DAY;
+
+        $cacheKeyHour = "$key-$currentHour";
+
+        if (!Cache::has($cacheKeyHour)) {
+
+            for ($h = 0; $h < $hours; $h++) {
+
+                $minuteRange = [random_int(0, 59)];
+                while (count($minuteRange) < $perHour) {
+                    $num = random_int(0, 59);
+
+                    if (NumberHelper::minDist($minuteRange, $num) > $minDiff && NumberHelper::minDist($minuteRange, $num) < $maxDiff) {
+                        $minuteRange[] = $num;
+                    }
+                }
+
+                sort($minuteRange);
+
+                Cache::put("$key-$h", implode(',', $minuteRange) . ' ' . $expressionEndPart, Carbon::now()->endOfDay());
+
+            }
+        }
+
+        return Cache::get($cacheKeyHour);
     }
 
     /**
@@ -84,42 +115,11 @@ final class TravianScheduler
         return $randomMinutePart . ' ' . $expressionEndPart;
     }
 
-    /**
-     * @throws Exception
-     */
-    public static function actionConfirmRunFarmListCronExpression(): string
-    {
-        $key = self::FARM_LIST_CONFIRM_ACTION;
-
-        $randomMinutePart = random_int(23, 33);
-
-        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addHour(), function () use ($randomMinutePart) {
-            return $randomMinutePart;
-        });
-
-        $expressionEndPart = '* * * *';
-
-        return $randomMinutePart . ' ' . $expressionEndPart;
-    }
-
-    public static function actionAuctionSellingCronExpression(): string
-    {
-        $key = self::AUCTION_SELLING;
-
-        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addMinutes(30), function () {
-            return random_int(0, 59);
-        });
-
-        $expressionEndPart = '7,9 * * *';
-
-        return $randomMinutePart . ' ' . $expressionEndPart;
-    }
-
     public static function actionAuctionBidsCronExpression(): string
     {
         $key = self::AUCTION_BIDS;
 
-        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addMinutes(30), function () {
+        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addHour(), function () {
             return random_int(0, 59);
         });
 

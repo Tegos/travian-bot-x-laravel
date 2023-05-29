@@ -11,4 +11,15 @@ final class NumberHelper
 
         return ceil($number + $num);
     }
+
+    public static function minDist($array, $n)
+    {
+        $distances = [];
+
+        foreach ($array as $item) {
+            $distances[] = abs($item - $n);
+        }
+
+        return min($distances);
+    }
 }
