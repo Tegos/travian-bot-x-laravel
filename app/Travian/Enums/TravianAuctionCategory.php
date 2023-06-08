@@ -8,15 +8,6 @@ final class TravianAuctionCategory
 {
     const LAW_TABLETS = 'lawTablets';
 
-    const OINTMENT = 'ointment';
-
-    const CAGE = 'cage';
-
-    const SCROLL = 'scroll';
-
-    const BANDAGE25 = 'bandage25';
-    const BANDAGE33 = 'bandage33';
-
     const HELMET = 'helmet';
     const BODY = 'body';
     const LEFT_HAND = 'leftHand';
@@ -28,6 +19,15 @@ final class TravianAuctionCategory
     const BOOK_OF_WISDOM = 'bookOfWisdom';
 
     const ARTWORK = 'artWork';
+
+    const OINTMENT = 'ointment';
+
+    const CAGE = 'cage';
+
+    const SCROLL = 'scroll';
+
+    const BANDAGE25 = 'bandage25';
+    const BANDAGE33 = 'bandage33';
 
     public static function getCategories(): array
     {
