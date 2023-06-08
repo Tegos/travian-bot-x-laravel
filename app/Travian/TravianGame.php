@@ -179,7 +179,7 @@ final class TravianGame extends BaseAction
     {
         $this->performLoginAction();
 
-        TravianGameHelper::waitRandomizer(5);
+        TravianGameHelper::waitRandomizer(3);
 
         if ($this->isAuthenticated()) {
 

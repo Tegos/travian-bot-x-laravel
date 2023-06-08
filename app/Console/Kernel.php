@@ -26,10 +26,6 @@ final class Kernel extends ConsoleKernel
         $schedule->command(TravianRunFarmListActionCommand::class)
             ->cron(TravianScheduler::actionRunFarmListCronExpression());
 
-//        // run check farm lists
-//        $schedule->command(TravianRunFarmListActionCommand::class)
-//            ->cron(TravianScheduler::actionCheckRunFarmListCronExpression());
-
         // auction bids
         $schedule->command(TravianAuctionBidsActionCommand::class)
             ->cron(TravianScheduler::actionAuctionBidsCronExpression());

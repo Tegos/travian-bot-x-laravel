@@ -70,7 +70,7 @@ final class TravianGameService
      */
     public function performBids(): void
     {
-        $limit = 10;
+        $limit = 5;
         $auctionTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#auction .currentBid'));
         $auctionBidRows = $auctionTable->findElements(WebDriverBy::cssSelector('tbody tr'));
 
@@ -110,11 +110,11 @@ final class TravianGameService
                 $itemCategory = Str::replace('itemCategory_', '', $itemCategoryClass);
 
                 $price = TravianAuctionCategoryPrice::getPrice($itemCategory);
-                $price = NumberHelper::numberRandomizer($price, 3, 15);
+                $price = NumberHelper::numberRandomizer($price, 2, 17);
 
                 $bidPrice = $amount * $price;
 
-                if ($bidPrice > $currentBidPrice && $timerSecondsLeft > 10) {
+                if ($bidPrice > $currentBidPrice && $timerSecondsLeft > 5) {
                     $bidButton->click();
                     TravianGameHelper::waitRandomizer(1);
 
