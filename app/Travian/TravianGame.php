@@ -189,6 +189,7 @@ final class TravianGame extends BaseAction
             TravianGameHelper::waitRandomizer(3);
 
             $silverAmount = $this->travianGameService->getSilverAmount();
+
             if ($silverAmount < 100) {
                 return;
             }

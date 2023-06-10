@@ -48,9 +48,7 @@ final class TravianGameService
             }
         }
 
-        // get json from string
-        preg_match('/(\{.+})/', $auctionDataScript, $result);
-        $dataJsonString = $result[0] ?? '';
+        $dataJsonString = StringHelper::getStringBetween($auctionDataScript, 'render(', ', {}');
 
         return json_decode($dataJsonString, true) ?? [];
     }
@@ -70,7 +68,7 @@ final class TravianGameService
      */
     public function performBids(): void
     {
-        $limit = 5;
+        $limit = 10;
         $auctionTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#auction .currentBid'));
         $auctionBidRows = $auctionTable->findElements(WebDriverBy::cssSelector('tbody tr'));
 

@@ -22,4 +22,14 @@ final class StringHelper
     {
         return strval(preg_replace('/\W/u', ' ', $str));
     }
+
+    public static function getStringBetween($str, $from, $to, $withFromAndTo = false): string
+    {
+        $sub = substr($str, strpos($str, $from) + strlen($from), strlen($str));
+        if ($withFromAndTo) {
+            return $from . substr($sub, 0, strrpos($sub, $to)) . $to;
+        }
+
+        return substr($sub, 0, strrpos($sub, $to));
+    }
 }
