@@ -6,20 +6,20 @@ use Illuminate\Support\Str;
 
 final class TravianAuctionCategoryPrice
 {
-    const HELMET = 105;
-    const BODY = 105;
-    const LEFT_HAND = 101;
-    const RIGHT_HAND = 105;
+    const HELMET = 107;
+    const BODY = 107;
+    const LEFT_HAND = 111;
+    const RIGHT_HAND = 115;
     const SHOES = 122;
     const HORSE = 222;
-    const BANDAGE25 = 1;
-    const BANDAGE33 = 2;
-    const CAGE = 2;
-    const SCROLL = 3;
-    const OINTMENT = 2;
+    const BANDAGE25 = 2;
+    const BANDAGE33 = 3;
+    const CAGE = 3;
+    const SCROLL = 4;
+    const OINTMENT = 3;
     const BUCKET_OF_WATER = 222;
     const BOOK_OF_WISDOM = 111;
-    const LAW_TABLETS = 2;
+    const LAW_TABLETS = 3;
     const ART_WORK = 333;
 
     public static function getPrice(string $itemCategory)

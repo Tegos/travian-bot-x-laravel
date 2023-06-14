@@ -4,10 +4,10 @@ namespace App\Support\Helpers;
 
 final class NumberHelper
 {
-    public static function numberRandomizer(int $number, int $minPercent = 10, $maxPercent = 30): string
+    public static function numberRandomizer(int $number, int $minPercent = 10, $maxPercent = 30): float
     {
         $percent = rand($minPercent, $maxPercent);
-        $num = $number * $percent / 100;
+        $num = min($number * $percent / 100, 1);
 
         return ceil($number + $num);
     }
