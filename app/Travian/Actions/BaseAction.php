@@ -80,9 +80,13 @@ abstract class BaseAction
             TravianRoute::rallyPointRoute(),
             TravianRoute::allianceRoute(),
             TravianRoute::reportRoute(),
+            TravianRoute::reportRouteSurrounding(),
             TravianRoute::allianceReportRoute(),
             TravianRoute::heroInventoryRoute(),
             TravianRoute::auctionRoute(),
+            TravianRoute::messagesInboxRoute(),
+            TravianRoute::villageStatisticsRoute(),
+            TravianRoute::stableRoute(),
         ];
 
         TravianGameHelper::waitRandomizer(3);

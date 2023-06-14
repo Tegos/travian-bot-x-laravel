@@ -35,6 +35,12 @@ final class TravianRoute
         return self::buildUrl('report');
     }
 
+    public static function reportRouteSurrounding(): string
+    {
+        $reportRoute = self::reportRoute();
+        return $reportRoute . '/surrounding';
+    }
+
     public static function allianceReportRoute(): string
     {
         $allianceRoute = self::allianceRoute();
@@ -54,6 +60,21 @@ final class TravianRoute
     public static function auctionSellRoute(): string
     {
         return self::buildUrl('hero/auction?tab=sell');
+    }
+
+    public static function messagesInboxRoute(): string
+    {
+        return self::buildUrl('messages/inbox');
+    }
+
+    public static function villageStatisticsRoute(): string
+    {
+        return self::buildUrl('village/statistics');
+    }
+
+    public static function stableRoute(): string
+    {
+        return self::buildUrl('build.php?gid=20');
     }
 
     protected static function buildUrl(string $path = ''): string
