@@ -58,9 +58,9 @@ final class TravianScheduler
         $now = Carbon::now();
         $currentHour = $now->hour;
 
-        $perHour = 3;
-        $minDiff = 15;
-        $maxDiff = 25;
+        // limits minutes
+        $minDiff = 11;
+        $maxDiff = 19;
 
         $expressionEndPart = '* * * *';
 
@@ -71,14 +71,23 @@ final class TravianScheduler
         if (!Cache::has($cacheKeyHour)) {
 
             for ($h = 0; $h < $hours; $h++) {
+                $perHour = random_int(3, 4);
 
-                $minuteRange = [random_int(0, 59)];
+                $minuteRange = [random_int(1, 57)];
+                $count = 1000;
+                $i = 0;
                 while (count($minuteRange) < $perHour) {
-                    $num = random_int(0, 59);
+                    $i++;
+                    $num = random_int(1, 57);
 
                     if (NumberHelper::minDist($minuteRange, $num) > $minDiff && NumberHelper::minDist($minuteRange, $num) < $maxDiff) {
                         $minuteRange[] = $num;
                     }
+
+                    if ($i > $count) {
+                        break;
+                    }
+
                 }
 
                 sort($minuteRange);
