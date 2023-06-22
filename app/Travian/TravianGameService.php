@@ -153,17 +153,16 @@ final class TravianGameService
         $this->browser->visit(TravianRoute::mainRoute());
         TravianGameHelper::waitRandomizer(3);
 
-        $troopsTableRows = $this->browser->driver->findElements(WebDriverBy::cssSelector('#troops tr'));
-        $horsesCount = 0;
+        $troopsTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#troops'));
 
-        foreach ($troopsTableRows as $troopsTableRow) {
-            $theutatesThunders = $troopsTableRow->findElements(WebDriverBy::className(TravianTroopSelector::THEUTATES_THUNDERS));
-            if ($theutatesThunders) {
-                $horsesCount = $troopsTableRow->findElement(WebDriverBy::className('num'))->getText();
-                break;
-            }
-        }
+        $tableText = $troopsTable->getText();
 
-        return intval($horsesCount);
+        $troops = preg_split('/\s*\R/', trim($tableText));
+
+        $horsesData = Arr::first($troops, function ($v) {
+            return Str::contains($v, TravianTroopSelector::THEUTATES_THUNDERS_TITLE, true);
+        });
+
+        return intval($horsesData);
     }
 }
