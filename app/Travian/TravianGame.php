@@ -198,6 +198,7 @@ final class TravianGame extends BaseAction
             TravianGameHelper::waitRandomizer(1);
 
             $categories = TravianAuctionCategory::getCategories();
+            shuffle($categories);
 
             $filterContainer = $this->browser->driver->findElement(WebDriverBy::cssSelector('#auction #filter .filterContainer'));
 
