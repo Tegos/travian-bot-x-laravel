@@ -42,7 +42,7 @@ final class TravianGameService
         foreach ($scripts as $script) {
             $scriptContent = $script->getDomProperty('innerHTML');
 
-            if (Str::contains($scriptContent, ['checkSum', 'HeroAuction '])) {
+            if (Str::contains($scriptContent, ['checkSum', 'HeroAuction'])) {
                 $auctionDataScript = $scriptContent;
                 break;
             }
