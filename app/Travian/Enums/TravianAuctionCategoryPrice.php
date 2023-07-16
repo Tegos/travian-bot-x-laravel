@@ -17,9 +17,9 @@ final class TravianAuctionCategoryPrice
     const CAGE = 3;
     const SCROLL = 4;
     const OINTMENT = 3;
-    const BUCKET_OF_WATER = 222;
+    const BUCKET_OF_WATER = 333;
     const BOOK_OF_WISDOM = 111;
-    const LAW_TABLETS = 3;
+    const LAW_TABLETS = 2;
     const ART_WORK = 333;
 
     public static function getPrice(string $itemCategory)
