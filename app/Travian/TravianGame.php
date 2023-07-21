@@ -30,7 +30,7 @@ final class TravianGame extends BaseAction
     {
         $this->performLoginAction();
 
-        TravianGameHelper::waitRandomizer(3);
+        TravianGameHelper::waitRandomizer(5);
 
         $this->performRandomAction();
 
@@ -53,9 +53,11 @@ final class TravianGame extends BaseAction
             Log::channel('travian')->debug($horsesAmount . ' horses');
 
             $this->browser->visit(TravianRoute::rallyPointFarmListRoute());
-            TravianGameHelper::waitRandomizer(5);
+            TravianGameHelper::waitRandomizer(7);
 
             Log::channel('travian')->info(__FUNCTION__);
+
+            $this->browser->script('window.scrollBy(0,"+random+");');
 
             $buttonStartAllFarmList = $this->browser->driver->findElement(WebDriverBy::cssSelector('#raidList button.startAll'));
             $buttonStartAllFarmList->click();
@@ -72,6 +74,8 @@ final class TravianGame extends BaseAction
             Cache::set(TravianScheduler::CHECK_FARM_LIST_ACTION . 'minute-part', $now->minute);
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
+
+            TravianGameHelper::waitRandomizer(3);
         }
     }
 
@@ -186,7 +190,7 @@ final class TravianGame extends BaseAction
             Log::channel('travian_auction')->info(__FUNCTION__);
 
             $this->browser->visit(TravianRoute::mainRoute());
-            TravianGameHelper::waitRandomizer(3);
+            TravianGameHelper::waitRandomizer(5);
 
             $silverAmount = $this->travianGameService->getSilverAmount();
 
@@ -195,7 +199,7 @@ final class TravianGame extends BaseAction
             }
 
             $this->browser->visit(TravianRoute::auctionRoute());
-            TravianGameHelper::waitRandomizer(1);
+            TravianGameHelper::waitRandomizer(2);
 
             $categories = TravianAuctionCategory::getCategories();
             shuffle($categories);
@@ -206,11 +210,11 @@ final class TravianGame extends BaseAction
                 $buttonSelector = '[data-key="' . $category . '"]';
                 $buttonFilter = $filterContainer->findElement(WebDriverBy::cssSelector($buttonSelector));
 
-                TravianGameHelper::waitRandomizer(1);
+                TravianGameHelper::waitRandomizer(3);
                 $buttonFilter->click();
 
                 $this->browser->driver->wait()->until(TravianGameHelper::jqueryAjaxFinished());
-                TravianGameHelper::waitRandomizer(1);
+                TravianGameHelper::waitRandomizer(3);
 
                 $this->travianGameService->performBids();
             }

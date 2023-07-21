@@ -24,8 +24,6 @@ final class BrowserManager extends Manager
         } catch (\Throwable $e) {
         }
 
-        $browser->quit();
-
         $this->driver->close();
 
         if (!empty($e)) {

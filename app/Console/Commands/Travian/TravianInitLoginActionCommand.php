@@ -27,6 +27,8 @@ final class TravianInitLoginActionCommand extends Command
 
             $travianGame->performLoginAction();
 
+            $travianGame->performRandomAction();
+
             $browser->quit();
 
         });

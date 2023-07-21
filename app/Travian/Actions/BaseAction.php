@@ -2,12 +2,15 @@
 
 namespace App\Travian\Actions;
 
+use App\Support\Helpers\FileHelper;
 use App\Travian\Helpers\TravianGameHelper;
 use App\Travian\TravianGameService;
 use App\Travian\TravianRoute;
 use Exception;
 use Facebook\WebDriver\Exception\TimeoutException;
+use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverKeys;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -87,6 +90,7 @@ abstract class BaseAction
             TravianRoute::messagesInboxRoute(),
             TravianRoute::villageStatisticsRoute(),
             TravianRoute::stableRoute(),
+            TravianRoute::mapRoute(),
         ];
 
         TravianGameHelper::waitRandomizer(3);
@@ -100,7 +104,36 @@ abstract class BaseAction
             foreach ($routes as $route) {
                 $this->browser->visit($route);
                 TravianGameHelper::waitRandomizer(3);
+                $this->browser->script('window.scrollBy(0,"+random+");');
+
+                $mapContainer = $this->browser->element('#mapContainer');
+                if (!empty($mapContainer)) {
+                    $randomDivs = $this->browser->driver->findElements(WebDriverBy::cssSelector('div'));
+                    shuffle($randomDivs);
+
+                    $div = Arr::first($randomDivs, function ($randomDiv) {
+                        /** @var RemoteWebElement $randomDiv */
+                        return $randomDiv->isDisplayed() && $randomDiv->isEnabled();
+                    });
+
+                    $this->browser->driver->getMouse()
+                        ->mouseDown($mapContainer->getCoordinates())
+                        ->mouseMove($div->getCoordinates())
+                        ->mouseUp($div->getCoordinates());
+
+                    TravianGameHelper::waitRandomizer(3);
+                }
+
+                $this->browser->driver->getKeyboard()->pressKey(WebDriverKeys::DOWN);
+
+                $this->browser->screenshot(FileHelper::getScreenshotFileName($route));
+
+                $randomLinks = $this->browser->driver->findElements(WebDriverBy::cssSelector('#center a:not([href="#"])'));
+
+                $this->travianGameService->clickRandomLink($randomLinks);
             }
+
+            TravianGameHelper::waitRandomizer(5);
 
             $this->browser->screenshot(Str::snake(__FUNCTION__));
         }

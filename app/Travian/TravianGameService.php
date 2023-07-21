@@ -3,6 +3,7 @@
 namespace App\Travian;
 
 use App\Exceptions\BusinessException;
+use App\Support\Helpers\FileHelper;
 use App\Support\Helpers\NumberHelper;
 use App\Support\Helpers\StringHelper;
 use App\Travian\Enums\TravianAuctionBid;
@@ -128,7 +129,9 @@ final class TravianGameService
                     }
 
                     $bidInput->clear()->sendKeys($bidPrice);
-                    TravianGameHelper::waitRandomizer(0);
+
+                    TravianGameHelper::waitRandomizer(3);
+
                     $this->browser->screenshot(Str::snake(__FUNCTION__));
                     $this->browser->driver->getKeyboard()->pressKey(WebDriverKeys::ENTER);
                     $bidCount++;
@@ -150,7 +153,8 @@ final class TravianGameService
      */
     public function getHorsesAmount(): int
     {
-        $this->browser->visit(TravianRoute::mainRoute());
+        $village = 19289;
+        $this->browser->visit(TravianRoute::mainRoute('?newdid=' . $village));
         TravianGameHelper::waitRandomizer(3);
 
         $troopsTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#troops'));
@@ -164,5 +168,24 @@ final class TravianGameService
         });
 
         return intval($horsesData);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function clickRandomLink(array $links, $times = 1): void
+    {
+        for ($i = 0; $i < $times; $i++) {
+            /** @var RemoteWebElement $link */
+            $link = Arr::random($links);
+            $href = $link->getAttribute('href');
+            if ($href) {
+
+                $link->click();
+                TravianGameHelper::waitRandomizer(2);
+
+                $this->browser->screenshot(FileHelper::getScreenshotFileName($href));
+            }
+        }
     }
 }

@@ -8,6 +8,7 @@ final class StringHelper
     {
         $string = html_entity_decode($string);
         $string = self::normalizeChars($string);
+        $string = self::clean($string);
         $string = self::normalizeSpaces($string);
 
         return trim($string);
@@ -21,6 +22,11 @@ final class StringHelper
     public static function normalizeChars(string $str = ''): string
     {
         return strval(preg_replace('/\W/u', ' ', $str));
+    }
+
+    public static function clean(string $str = ''): string
+    {
+        return strval(preg_replace('/[^A-Za-z0-9]/', '', $str));
     }
 
     public static function getStringBetween($str, $from, $to, $withFromAndTo = false): string

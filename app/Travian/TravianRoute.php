@@ -4,9 +4,9 @@ namespace App\Travian;
 
 final class TravianRoute
 {
-    public static function mainRoute(): string
+    public static function mainRoute($query = ''): string
     {
-        return self::buildUrl('dorf1.php');
+        return self::buildUrl('dorf1.php' . $query);
     }
 
     public static function buildingsRoute(): string
@@ -75,6 +75,11 @@ final class TravianRoute
     public static function stableRoute(): string
     {
         return self::buildUrl('build.php?gid=20');
+    }
+
+    public static function mapRoute(): string
+    {
+        return self::buildUrl('karte.php');
     }
 
     protected static function buildUrl(string $path = ''): string
