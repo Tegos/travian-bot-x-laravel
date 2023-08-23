@@ -8,11 +8,11 @@ use Exception;
 use Illuminate\Console\Command;
 use Laravel\Dusk\Browser;
 
-final class TravianInitLoginActionCommand extends Command
+final class TravianObserveUsersActionCommand extends Command
 {
-    protected $signature = 'travian:login-action';
+    protected $signature = 'travian:observe-users-action';
 
-    protected $description = 'Perform login action';
+    protected $description = 'Perform observe users action';
 
     /**
      * @throws Exception
@@ -25,11 +25,11 @@ final class TravianInitLoginActionCommand extends Command
 
             $travianGame = new TravianGame($browser);
 
-            $travianGame->performLoginAction();
+            $travianGame->performObserveUsersAction();
 
-            $travianGame->performRandomAction();
-
-            $browser->quit();
+            rescue(function () use ($browser) {
+                $browser->quit();
+            });
 
         });
 

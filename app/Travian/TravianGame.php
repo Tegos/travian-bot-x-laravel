@@ -2,6 +2,7 @@
 
 namespace App\Travian;
 
+use App\Support\Helpers\FileHelper;
 use App\Support\Helpers\StringHelper;
 use App\Travian\Actions\BaseAction;
 use App\Travian\Enums\TravianAuctionCategory;
@@ -17,6 +18,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Symfony\Component\DomCrawler\Crawler;
 use Throwable;
 
 final class TravianGame extends BaseAction
@@ -41,12 +43,14 @@ final class TravianGame extends BaseAction
             $driver = $this->browser->driver;
 
             $horsesAmount = $this->travianGameService->getHorsesAmount();
+            $minHorsesAmount = config('services.travian.min_horses_amount');
 
             $this->browser->visit(TravianRoute::rallyPointRoute());
             TravianGameHelper::waitRandomizer(3);
 
-            if ($horsesAmount < config('services.travian.min_horses_amount')) {
-                Log::channel('travian')->debug('Not enough horses');
+            if ($horsesAmount < $minHorsesAmount) {
+                Log::channel('travian')
+                    ->debug('Not enough horses, min: ' . $minHorsesAmount . ' current: ' . $horsesAmount);
                 return;
             }
 
@@ -73,7 +77,7 @@ final class TravianGame extends BaseAction
             $now = Carbon::now()->addMinutes(random_int(21, 33));
             Cache::set(TravianScheduler::CHECK_FARM_LIST_ACTION . 'minute-part', $now->minute);
 
-            $this->browser->screenshot(Str::snake(__FUNCTION__));
+            $this->browser->screenshot(FileHelper::getScreenshotFileName(TravianRoute::rallyPointFarmListRoute() . '&' . __FUNCTION__));
 
             TravianGameHelper::waitRandomizer(3);
         }
@@ -84,15 +88,13 @@ final class TravianGame extends BaseAction
      * @throws Exception
      * @throws Throwable
      */
-    public function performNotifyAuctionSellingAction(): void
+    public function performDetectOwnAuctionItemsAction(): void
     {
         $this->performLoginAction();
 
-        TravianGameHelper::waitRandomizer(3);
+        TravianGameHelper::waitRandomizer(10);
 
         if ($this->isAuthenticated()) {
-
-            Log::channel('travian')->info(__FUNCTION__);
 
             $this->browser->visit(TravianRoute::mainRoute());
             TravianGameHelper::waitRandomizer(3);
@@ -105,13 +107,16 @@ final class TravianGame extends BaseAction
 
                 foreach ($sellingItems as $k => $sellingItem) {
 
-                    unset($sellingItems[$k]['description']);
-                    unset($sellingItems[$k]['couldBeDeleted']);
-                    unset($sellingItems[$k]['identifier']);
-                    unset($sellingItems[$k]['obfuscatedId']);
+                    $sellingItems[$k] = Arr::only($sellingItem,
+                        [
+                            'id', 'nameFormatted', 'quality', 'slot',
+                            'uid', 'item_type_id', 'amount', 'status',
+                            'time_start', 'time_end', 'price', 'bids', 'uid_bidder'
+                        ]
+                    );
 
                     // formatting
-                    $name = StringHelper::normalizeString($sellingItems[$k]['nameFormatted']);
+                    $name = StringHelper::normalizeString($sellingItem['nameFormatted']);
                     $sellingItems[$k]['nameFormatted'] = $name;
 
                     $gameDateNow = Carbon::now()->timezone(config('services.travian.timezone'));
@@ -121,7 +126,6 @@ final class TravianGame extends BaseAction
 
                     $sellingItems[$k]['time_end_date'] = $timeEnd->format('d.m.Y H:i:s');
                     $sellingItems[$k]['left_time'] = $timeEnd->diff($gameDateNow)->format('%H:%I:%S');
-
                 }
 
                 if (count($sellingItems) > 0) {
@@ -133,8 +137,6 @@ final class TravianGame extends BaseAction
             }
 
             TravianGameHelper::waitRandomizer(3);
-
-            $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
     }
 
@@ -145,41 +147,6 @@ final class TravianGame extends BaseAction
      * @throws Throwable
      */
     public function performAuctionBidsAction(): void
-    {
-        $this->performLoginAction();
-
-        TravianGameHelper::waitRandomizer(5);
-
-        if ($this->isAuthenticated()) {
-
-            TravianGameHelper::randomBreak();
-
-            Log::channel('travian_auction')->info(__FUNCTION__);
-
-            $this->browser->visit(TravianRoute::mainRoute());
-            TravianGameHelper::waitRandomizer(3);
-
-            $silverAmount = $this->travianGameService->getSilverAmount();
-            if ($silverAmount < 100) {
-                return;
-            }
-
-            $this->browser->visit(TravianRoute::auctionRoute());
-            TravianGameHelper::waitRandomizer(1);
-
-            $this->travianGameService->performBids();
-
-            $this->browser->screenshot(Str::snake(__FUNCTION__));
-        }
-    }
-
-    /**
-     * @throws UnsupportedOperationException
-     * @throws TimeoutException
-     * @throws Exception
-     * @throws Throwable
-     */
-    public function performAuctionFullBidsAction(): void
     {
         $this->performLoginAction();
 
@@ -217,9 +184,87 @@ final class TravianGame extends BaseAction
                 TravianGameHelper::waitRandomizer(3);
 
                 $this->travianGameService->performBids();
+
+                $this->browser->screenshot(FileHelper::getScreenshotFileName(TravianRoute::auctionRoute() . '&category=' . $category));
+            }
+        }
+    }
+
+    /**
+     * @throws TimeoutException
+     * @throws Exception
+     * @throws Throwable
+     */
+    public function performObserveUsersAction(): void
+    {
+        $profileObserveEnabled = config('services.travian.profile_observe_enabled');
+
+        if (!$profileObserveEnabled) {
+            return;
+        }
+
+        $this->performLoginAction();
+
+        TravianGameHelper::waitRandomizer(5);
+
+        $now = Carbon::now();
+
+        if ($this->isAuthenticated()) {
+
+            $profileObserveList = config('services.travian.profile_observe_list');
+            shuffle($profileObserveList);
+
+            TravianGameHelper::waitRandomizer(3);
+
+            if (empty($profileObserveList)) {
+                Log::channel('travian')
+                    ->debug('profileObserveList is empty');
+                return;
             }
 
-            $this->browser->screenshot(Str::snake(__FUNCTION__));
+            $this->browser->visit(TravianRoute::statisticsPlayerTop10Route());
+            TravianGameHelper::waitRandomizer(5);
+
+            foreach ($profileObserveList as $itemUid) {
+
+                $this->browser->visit(TravianRoute::profileRoute($itemUid));
+                $this->browser->script('window.scrollBy(0,"+random+");');
+
+                TravianGameHelper::waitRandomizer(3);
+
+                $login = Str::lower($this->browser->driver->findElement(WebDriverBy::cssSelector('.titleInHeader'))->getText());
+
+                $playerDetails = $this->browser->driver->findElement(WebDriverBy::cssSelector('#playerProfile .playerDetails'));
+                $playerDetails->takeElementScreenshot(FileHelper::getPlayerObserveScreenshotPath($login));
+
+                $crawler = new Crawler($playerDetails->getDomProperty('outerHTML'));
+
+                $details = $crawler->filter('table')->filter('tr')->each(function ($tr) {
+                    return $tr->filter('td')->each(function ($td) {
+                        return trim($td->text());
+                    });
+                });
+
+                $details = array_filter($details);
+
+                $detailsData = Arr::dot($details);
+
+                $userInfo = [
+                    'population' => Arr::get($detailsData, '7.1'),
+                    'attacker_point' => Arr::get($detailsData, '8.1'),
+                    'defender_point' => Arr::get($detailsData, '9.1'),
+                    'experience' => Arr::get($detailsData, '10.1'),
+                ];
+
+                //Storage::disk('travian')->createDirectory();
+                //$stream = fopen(Storage::disk('travian')->path('players/' . $login . '/' . $now->toDateString() . '/details.csv'), 'a+');
+
+                //fputcsv($stream, $userInfo);
+
+                TravianGameHelper::waitRandomizer(3);
+            }
+
+            TravianGameHelper::waitRandomizer(5);
         }
     }
 }

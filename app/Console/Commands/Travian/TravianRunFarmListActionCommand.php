@@ -31,8 +31,9 @@ final class TravianRunFarmListActionCommand extends Command
 
             $travianGame->performRunFarmListAction();
 
-            $browser->quit();
-
+            rescue(function () use ($browser) {
+                $browser->quit();
+            });
         });
 
         $time = $start->diffInSeconds(Carbon::now());

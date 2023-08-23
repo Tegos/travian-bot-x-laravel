@@ -130,14 +130,14 @@ return [
         'travian' => [
             'driver' => 'daily',
             'path' => storage_path('logs/travian.log'),
-            'days' => 10,
+            'days' => 3,
             'level' => env('LOG_LEVEL', 'info'),
         ],
 
         'travian_auction' => [
             'driver' => 'daily',
             'path' => storage_path('logs/travian_auction.log'),
-            'days' => 7,
+            'days' => 3,
         ],
     ],
 

@@ -36,6 +36,11 @@ return [
             'throw' => false,
         ],
 
+        'travian' => [
+            'driver' => 'local',
+            'root' => storage_path('travian'),
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

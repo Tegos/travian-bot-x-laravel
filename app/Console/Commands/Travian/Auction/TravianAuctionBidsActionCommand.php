@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\Travian;
+namespace App\Console\Commands\Travian\Auction;
 
 use App\Support\Browser\BrowserMangerFactory;
 use App\Travian\TravianGame;
@@ -8,11 +8,11 @@ use Exception;
 use Illuminate\Console\Command;
 use Laravel\Dusk\Browser;
 
-final class TravianNotifyAuctionSellingActionCommand extends Command
+final class TravianAuctionBidsActionCommand extends Command
 {
-    protected $signature = 'travian:notify-action-selling-action';
+    protected $signature = 'travian:auction-bids-action';
 
-    protected $description = 'Perform notify auction selling action';
+    protected $description = 'Perform auction bids action';
 
     /**
      * @throws Exception
@@ -25,9 +25,11 @@ final class TravianNotifyAuctionSellingActionCommand extends Command
 
             $travianGame = new TravianGame($browser);
 
-            $travianGame->performNotifyAuctionSellingAction();
+            $travianGame->performAuctionBidsAction();
 
-            $browser->quit();
+            rescue(function () use ($browser) {
+                $browser->quit();
+            });
 
         });
 

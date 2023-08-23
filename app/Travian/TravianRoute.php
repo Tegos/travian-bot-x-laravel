@@ -82,6 +82,29 @@ final class TravianRoute
         return self::buildUrl('karte.php');
     }
 
+    public static function mapCoordinateRoute(int $x = 0, $y = 0): string
+    {
+        $mapRoute = self::mapRoute();
+        return $mapRoute . '?' . http_build_query(['x' => $x, 'y' => $y]);
+    }
+
+    public static function positionDetailsRoute(int $x = 0, $y = 0): string
+    {
+        $positionDetailsRoute = self::buildUrl('position_details.php');
+        return $positionDetailsRoute . '?' . http_build_query(['x' => $x, 'y' => $y]);
+    }
+
+    public static function profileRoute(int $userId = 0): string
+    {
+        $profileRoute = self::buildUrl('profile');
+        return $profileRoute . '/' . $userId;
+    }
+
+    public static function statisticsPlayerTop10Route(): string
+    {
+        return self::buildUrl('statistics/player/top10');
+    }
+
     protected static function buildUrl(string $path = ''): string
     {
         $domain = trim(config('services.travian.domain'), '/');

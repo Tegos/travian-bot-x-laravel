@@ -2,7 +2,8 @@
 
 namespace App\Console;
 
-use App\Console\Commands\Travian\TravianInitLoginActionCommand;
+use App\Console\Commands\Travian\TravianLoginActionCommand;
+use App\Console\Commands\Travian\TravianObserveUsersActionCommand;
 use App\Console\Commands\Travian\TravianRunFarmListActionCommand;
 use App\Travian\TravianScheduler;
 use Exception;
@@ -18,12 +19,16 @@ final class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // login
-        $schedule->command(TravianInitLoginActionCommand::class)
+        $schedule->command(TravianLoginActionCommand::class)
             ->cron(TravianScheduler::actionLoginScheduleCronExpression());
 
         // run farm lists
         $schedule->command(TravianRunFarmListActionCommand::class)
             ->cron(TravianScheduler::actionRunFarmListCronExpression());
+
+        // run observe users
+        $schedule->command(TravianObserveUsersActionCommand::class)
+            ->cron(TravianScheduler::observeUsersActionCronExpression());
     }
 
     /**

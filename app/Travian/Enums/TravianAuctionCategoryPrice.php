@@ -12,14 +12,14 @@ final class TravianAuctionCategoryPrice
     const RIGHT_HAND = 115;
     const SHOES = 122;
     const HORSE = 222;
-    const BANDAGE25 = 3;
+    const BANDAGE25 = 4;
     const BANDAGE33 = 5;
-    const CAGE = 3;
-    const SCROLL = 4;
+    const CAGE = 2;
+    const SCROLL = 3;
     const OINTMENT = 3;
     const BUCKET_OF_WATER = 333;
-    const BOOK_OF_WISDOM = 111;
-    const LAW_TABLETS = 2;
+    const BOOK_OF_WISDOM = 15;
+    const LAW_TABLETS = 1;
     const ART_WORK = 333;
 
     public static function getPrice(string $itemCategory)

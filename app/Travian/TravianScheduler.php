@@ -16,11 +16,9 @@ final class TravianScheduler
 
     const CHECK_FARM_LIST_ACTION = 'CHECK_FARM_LIST_ACTION';
 
-    const FARM_LIST_CONFIRM_ACTION = 'FARM_LIST_CONFIRM_ACTION';
-
-    const AUCTION_SELLING = 'AUCTION_SELLING';
-
     const AUCTION_BIDS = 'AUCTION_BIDS';
+
+    const OBSERVE_USERS_ACTION = 'OBSERVE_USERS_ACTION';
 
     /**
      * @throws Exception
@@ -109,6 +107,19 @@ final class TravianScheduler
         });
 
         $expressionEndPart = '* * * *';
+
+        return $randomMinutePart . ' ' . $expressionEndPart;
+    }
+
+    public static function observeUsersActionCronExpression(): string
+    {
+        $key = self::OBSERVE_USERS_ACTION;
+
+        $randomMinutePart = Cache::remember($key . 'minute-part', Carbon::now()->addHour(), function () {
+            return random_int(0, 59);
+        });
+
+        $expressionEndPart = '*/2 * * *';
 
         return $randomMinutePart . ' ' . $expressionEndPart;
     }

@@ -69,7 +69,7 @@ final class TravianGameService
      */
     public function performBids(): void
     {
-        $limit = 15;
+        $limit = 3;
         $auctionTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#auction .currentBid'));
         $auctionBidRows = $auctionTable->findElements(WebDriverBy::cssSelector('tbody tr'));
 
@@ -89,7 +89,7 @@ final class TravianGameService
                 $name = StringHelper::normalizeString($name);
 
                 // ignored items
-                if (Str::contains($name, $ignoredItems)) {
+                if (Str::contains($name, array_map([StringHelper::class, 'normalizeString'], $ignoredItems))) {
                     continue;
                 }
 
@@ -97,7 +97,10 @@ final class TravianGameService
                     continue;
                 }
 
-                $timerSecondsLeft = $auctionBidRow->findElement(WebDriverBy::cssSelector('td.time .timer'))->getAttribute('value');
+                $timerSecondsLeft = rescue(function () use ($auctionBidRow) {
+                    return $auctionBidRow->findElement(WebDriverBy::cssSelector('td.time .timer'))->getAttribute('value');
+                }, 0);
+
 
                 $amount = filter_var($name, FILTER_SANITIZE_NUMBER_INT);
                 $itemCategoryElement = $auctionBidRow->findElement(WebDriverBy::cssSelector('td img.itemCategory'));
@@ -132,7 +135,6 @@ final class TravianGameService
 
                     TravianGameHelper::waitRandomizer(3);
 
-                    $this->browser->screenshot(Str::snake(__FUNCTION__));
                     $this->browser->driver->getKeyboard()->pressKey(WebDriverKeys::ENTER);
                     $bidCount++;
 
@@ -153,19 +155,24 @@ final class TravianGameService
      */
     public function getHorsesAmount(): int
     {
-        $village = 19289;
-        $this->browser->visit(TravianRoute::mainRoute('?newdid=' . $village));
-        TravianGameHelper::waitRandomizer(3);
+        $horsesData = 0;
 
-        $troopsTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#troops'));
+        retry(3, function () use (&$horsesData) {
+            $village = 19289;
+            $this->browser->visit(TravianRoute::mainRoute('?newdid=' . $village));
+            TravianGameHelper::waitRandomizer(3);
 
-        $tableText = $troopsTable->getText();
+            $troopsTable = $this->browser->driver->findElement(WebDriverBy::cssSelector('#troops'));
 
-        $troops = preg_split('/\s*\R/', trim($tableText));
+            $tableText = $troopsTable->getText();
 
-        $horsesData = Arr::first($troops, function ($v) {
-            return Str::contains($v, TravianTroopSelector::THEUTATES_THUNDERS_TITLE, true);
-        });
+            $troops = preg_split('/\s*\R/', trim($tableText));
+
+            $horsesData = Arr::first($troops, function ($v) {
+                return Str::contains($v, TravianTroopSelector::THEUTATES_THUNDERS_TITLE, true);
+            });
+
+        }, 2000);
 
         return intval($horsesData);
     }
@@ -175,11 +182,22 @@ final class TravianGameService
      */
     public function clickRandomLink(array $links, $times = 1): void
     {
+        $ignoredUrls = [
+            'mark=unread',
+            'forum'
+        ];
         for ($i = 0; $i < $times; $i++) {
             /** @var RemoteWebElement $link */
             $link = Arr::random($links);
             $href = $link->getAttribute('href');
             if ($href) {
+
+                if (Str::contains($href, $ignoredUrls)) {
+                    return;
+                }
+
+                Log::channel('travian')->debug('Clicked random element:');
+                Log::channel('travian')->debug($href);
 
                 $link->click();
                 TravianGameHelper::waitRandomizer(2);

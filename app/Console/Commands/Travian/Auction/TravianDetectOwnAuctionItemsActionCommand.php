@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\Travian;
+namespace App\Console\Commands\Travian\Auction;
 
 use App\Support\Browser\BrowserMangerFactory;
 use App\Travian\TravianGame;
@@ -8,11 +8,11 @@ use Exception;
 use Illuminate\Console\Command;
 use Laravel\Dusk\Browser;
 
-final class TravianAuctionFullBidsActionCommand extends Command
+final class TravianDetectOwnAuctionItemsActionCommand extends Command
 {
-    protected $signature = 'travian:auction-full-bids-action';
+    protected $signature = 'travian:action-detect-own-items-action';
 
-    protected $description = 'Perform auction full bids action';
+    protected $description = 'Perform detect own auction items on sell';
 
     /**
      * @throws Exception
@@ -25,9 +25,11 @@ final class TravianAuctionFullBidsActionCommand extends Command
 
             $travianGame = new TravianGame($browser);
 
-            $travianGame->performAuctionFullBidsAction();
+            $travianGame->performDetectOwnAuctionItemsAction();
 
-            $browser->quit();
+            rescue(function () use ($browser) {
+                $browser->quit();
+            });
 
         });
 

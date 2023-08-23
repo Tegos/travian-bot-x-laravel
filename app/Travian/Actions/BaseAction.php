@@ -13,7 +13,6 @@ use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverKeys;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Laravel\Dusk\Browser;
 
 abstract class BaseAction
@@ -52,12 +51,9 @@ abstract class BaseAction
             $buttonLogin->click();
 
             $this->browser->waitForReload();
-            $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
 
-        TravianGameHelper::waitRandomizer(3);
-
-        $this->browser->screenshot(Str::snake(__FUNCTION__));
+        TravianGameHelper::waitRandomizer(5);
     }
 
     public function isAuthenticated(): bool
@@ -91,21 +87,36 @@ abstract class BaseAction
             TravianRoute::villageStatisticsRoute(),
             TravianRoute::stableRoute(),
             TravianRoute::mapRoute(),
+            TravianRoute::statisticsPlayerTop10Route(),
+            TravianRoute::profileRoute(Arr::first(Arr::random(
+                [
+                    734, 4970, 326, 8581, 5756, 5910, 529, 6264, 101, 5042, 2175, 4475, 1368, 2692,
+                    2112, 4519, 4944, 284, 1706, 1467, 232, 2374, 3596, 1242, 10709, 1685,
+                    7787, 5756, 12248, 101, 11730, 713, 6246, 10137, 11268, 78, 575, 14082, 1685
+                ], 1))),
+            ...[
+                TravianRoute::mapCoordinateRoute(random_int(-150, 150), random_int(-150, 150)),
+                TravianRoute::mapCoordinateRoute(random_int(-150, 150), random_int(-150, 150)),
+            ],
+            ...[
+                TravianRoute::positionDetailsRoute(random_int(-150, 150), random_int(-150, 150)),
+                TravianRoute::positionDetailsRoute(random_int(-150, 150), random_int(-150, 150)),
+            ]
         ];
 
         TravianGameHelper::waitRandomizer(3);
 
         if ($this->isAuthenticated()) {
 
-            Log::channel('travian')->debug(__FUNCTION__);
-
-            $routes = Arr::random($listRoutes, random_int(2, 3));
+            $routes = Arr::random($listRoutes, random_int(3, 5));
 
             foreach ($routes as $route) {
                 $this->browser->visit($route);
+
                 TravianGameHelper::waitRandomizer(3);
                 $this->browser->script('window.scrollBy(0,"+random+");');
 
+                // check if it is the map page
                 $mapContainer = $this->browser->element('#mapContainer');
                 if (!empty($mapContainer)) {
                     $randomDivs = $this->browser->driver->findElements(WebDriverBy::cssSelector('div'));
@@ -134,8 +145,6 @@ abstract class BaseAction
             }
 
             TravianGameHelper::waitRandomizer(5);
-
-            $this->browser->screenshot(Str::snake(__FUNCTION__));
         }
     }
 }
