@@ -12,13 +12,13 @@ final class TravianAuctionCategoryPrice
     const RIGHT_HAND = 115;
     const SHOES = 122;
     const HORSE = 222;
-    const BANDAGE25 = 4;
-    const BANDAGE33 = 5;
+    const BANDAGE25 = 6;
+    const BANDAGE33 = 7;
     const CAGE = 2;
     const SCROLL = 3;
     const OINTMENT = 3;
-    const BUCKET_OF_WATER = 333;
-    const BOOK_OF_WISDOM = 15;
+    const BUCKET_OF_WATER = 111;
+    const BOOK_OF_WISDOM = 11;
     const LAW_TABLETS = 1;
     const ART_WORK = 333;
 

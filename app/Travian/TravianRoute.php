@@ -105,6 +105,11 @@ final class TravianRoute
         return self::buildUrl('statistics/player/top10');
     }
 
+    public static function statisticsWoWRoute(): string
+    {
+        return self::buildUrl('statistics/wonderoftheworld');
+    }
+
     protected static function buildUrl(string $path = ''): string
     {
         $domain = trim(config('services.travian.domain'), '/');

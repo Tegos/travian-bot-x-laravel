@@ -109,6 +109,7 @@ abstract class BaseAction
         if ($this->isAuthenticated()) {
 
             $routes = Arr::random($listRoutes, random_int(3, 5));
+            $routes[] = TravianRoute::statisticsWoWRoute();
 
             foreach ($routes as $route) {
                 $this->browser->visit($route);
